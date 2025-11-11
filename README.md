@@ -2,14 +2,17 @@
 GameVerse Web Application for Software Architecture 
 
 Node Version: v24.11.0.
+
 Make sure you have Visual Studio Code btw.
 
 For WINDOWS: 
 Use Chocolatey v2.5.1.
 Read how to install Chocolatey on their official documentation for proper installation of node.js
 Ensure you have node installed.
+
 Check using:
 ```node -v```
+
 Also check if npm is working and check:
 ```npm -v```
 
