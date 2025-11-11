@@ -9,6 +9,9 @@ const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
+// --- In-memory comments store: { [gameId]: [{ text, at }] } ---
+const commentsByGame = Object.create(null);
+
 // Health check
 app.get("/api", (_req, res) => res.json({ ok: true }));
 
@@ -56,6 +59,25 @@ app.get("/api/game/:id", async (req, res) => {
     console.error("RAWG by-id error:", error);
     res.status(500).json({ error: "Failed to fetch game data" });
   }
+});
+
+// --- Comments API ---
+// Get comments for a game
+app.get("/api/game/:id/comments", (req, res) => {
+  const { id } = req.params;
+  res.json({ comments: commentsByGame[id] || [] });
+});
+
+// Add a comment for a game
+app.post("/api/game/:id/comments", (req, res) => {
+  const { id } = req.params;
+  const text = (req.body?.text || "").trim();
+  if (!text) return res.status(400).json({ error: "Comment text is required" });
+
+  if (!commentsByGame[id]) commentsByGame[id] = [];
+  const entry = { text, at: new Date().toISOString() };
+  commentsByGame[id].push(entry);
+  res.status(201).json({ ok: true, comment: entry });
 });
 
 app.listen(PORT, () => {
