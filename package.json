@@ -1,0 +1,25 @@
+{
+  "name": "gameverse",
+  "version": "1.0.0",
+  "description": "GameVerse Web Application for Software Architecture",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix web\" \"npm start --prefix server\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lyndonyz/GameVerse.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lyndonyz/GameVerse/issues"
+  },
+  "homepage": "https://github.com/lyndonyz/GameVerse#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
