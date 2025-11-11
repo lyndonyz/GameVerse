@@ -5,6 +5,13 @@ import './App.css'
 function App() {
   const [count, setCount] = useState(0)
 
+  useEffect(() => {
+    fetch("/api")
+      .then((res) => res.json())
+      .then((data) => setMessage(data.message))
+      .catch((err) => setMessage("Error fetching data"));
+  }, []);
+
   return (
     <>
       <div>
