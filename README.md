@@ -18,7 +18,10 @@ Make a new Directory called 4471 somewhere.
 <br>Clone the Repo to your local machine. Use HTTPS cloning.
 
 Should look like:
-<br>/4471/GameVerse/(the other folder/files)
+<br>
+```
+/4471/GameVerse/(the other folder/files)
+```
 
 Once you clone the repo, navigate into **GameVerse** folder.
 <br>Then navigate into the **web** folder and do: 
