@@ -15,18 +15,20 @@ const commentsByGame = Object.create(null);
 // Health
 app.get("/api", (_req, res) => res.json({ ok: true }));
 
-// Search (name + image)
-app.get("/api/search", async (req, res) => {
-  const q = (req.query.q || "").trim();
-  if (!q) return res.status(400).json({ error: "Missing query ?q=" });
-
+// --- Discover (popular) games for the home page ---
+app.get("/api/discover", async (req, res) => {
   const apiKey = process.env.EXTERNAL_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
 
+  const pageSize = Number(req.query.page_size || 24);
+  const page = Number(req.query.page || 1);
+
   try {
-    const url = `https://api.rawg.io/api/games?key=${apiKey}&search=${encodeURIComponent(
-      q
-    )}&page_size=10`;
+    // Use ordering that tends to surface popular/widely-added titles
+    const url =
+      `https://api.rawg.io/api/games?key=${apiKey}` +
+      `&ordering=-added&page=${page}&page_size=${pageSize}`;
+
     const response = await fetch(url);
     if (!response.ok) throw new Error(`RAWG API error: ${response.status}`);
 
@@ -35,9 +37,56 @@ app.get("/api/search", async (req, res) => {
       id: g.id,
       name: g.name,
       image: g.background_image || g.background_image_additional || null,
+      rating: g.rating ?? null,
+      released: g.released ?? null,
     }));
 
-    res.json({ results });
+    res.json({
+      results,
+      page,
+      pageSize,
+      hasNext: Boolean(json.next),
+      hasPrev: Boolean(json.previous),
+    });
+  } catch (err) {
+    console.error("RAWG discover error:", err);
+    res.status(500).json({ error: "Failed to load discover games" });
+  }
+});
+
+// Search (supports pagination) -> returns id, name, image, rating, released
+app.get("/api/search", async (req, res) => {
+  const q = (req.query.q || "").trim();
+  const page = Number(req.query.page || 1);
+  const pageSize = Number(req.query.page_size || 24);
+  if (!q) return res.status(400).json({ error: "Missing query ?q=" });
+
+  const apiKey = process.env.EXTERNAL_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
+
+  try {
+    const url =
+      `https://api.rawg.io/api/games?key=${apiKey}` +
+      `&search=${encodeURIComponent(q)}&page_size=${pageSize}&page=${page}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`RAWG API error: ${response.status}`);
+
+    const json = await response.json();
+    const results = (json.results || []).map((g) => ({
+      id: g.id,
+      name: g.name,
+      image: g.background_image || g.background_image_additional || null,
+      rating: g.rating || null,
+      released: g.released || null,
+    }));
+
+    res.json({
+      results,
+      page,
+      pageSize,
+      hasNext: Boolean(json.next),
+      hasPrev: Boolean(json.previous),
+    });
   } catch (err) {
     console.error("RAWG search error:", err);
     res.status(500).json({ error: "Failed to search games" });
@@ -72,6 +121,8 @@ app.get("/api/game/:id", async (req, res) => {
       platforms: Array.isArray(g.platforms)
         ? g.platforms.map((p) => p.platform?.name).filter(Boolean)
         : [],
+      developers: Array.isArray(g.developers) ? g.developers.map((d) => d.name) : [],
+      publishers: Array.isArray(g.publishers) ? g.publishers.map((p) => p.name) : [],
     };
 
     res.json(details);

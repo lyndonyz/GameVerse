@@ -1,36 +1,67 @@
-// App.jsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import "./App.css";
 
 function App() {
   const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
   const [results, setResults] = useState([]);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrev, setHasPrev] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const [selected, setSelected] = useState(null);   // {id,name,image} from search
-  const [details, setDetails] = useState(null);     // rich details from /api/game/:id
+  const [selected, setSelected] = useState(null);
+  const [details, setDetails] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const modalRef = useRef(null);
+  const [tab, setTab] = useState("overview");
 
-  const detailsRef = useRef(null);
+  const topRated = useMemo(() => {
+    return [...results]
+      .filter((r) => r.rating != null)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 5);
+  }, [results]);
 
-  const search = async () => {
-    const query = q.trim();
-    if (!query) return;
-
+  // --- API helpers ---
+  const loadDiscover = async (opts = {}) => {
+    const targetPage = opts.page ?? 1;
     setLoading(true);
     setErr("");
-    setResults([]);
-    setSelected(null);
-    setDetails(null);
-    setComments([]);
-
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/discover?page=${targetPage}&page_size=24`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResults(data.results || []);
+      setHasNext(Boolean(data.hasNext));
+      setHasPrev(Boolean(data.hasPrev));
+      setPage(data.page || targetPage);
+    } catch (e) {
+      console.error(e);
+      setErr("Failed to load games");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const runSearch = async (opts = {}) => {
+    const query = (opts.q ?? q).trim();
+    const targetPage = opts.page ?? page;
+    if (!query) return;
+    setLoading(true);
+    setErr("");
+    try {
+      const res = await fetch(
+        `/api/search?q=${encodeURIComponent(query)}&page=${targetPage}&page_size=24`
+      );
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setResults(data.results || []);
+      setHasNext(Boolean(data.hasNext));
+      setHasPrev(Boolean(data.hasPrev));
+      setPage(data.page || targetPage);
     } catch (e) {
       console.error(e);
       setErr("Failed to search games");
@@ -39,49 +70,61 @@ function App() {
     }
   };
 
+  // Load discover on initial mount
+  useEffect(() => {
+    loadDiscover({ page: 1 });
+  }, []);
+
   const onSubmit = (e) => {
     e.preventDefault();
-    search();
+    if (!q.trim()) {
+      setPage(1);
+      loadDiscover({ page: 1 });
+      return;
+    }
+    setPage(1);
+    runSearch({ page: 1 });
   };
 
-  // When a game is selected, load comments
-  useEffect(() => {
-    const loadComments = async () => {
-      if (!selected) return;
-      try {
-        const res = await fetch(`/api/game/${selected.id}/comments`);
-        const data = await res.json();
-        setComments(data.comments || []);
-      } catch (e) {
-        console.error(e);
-        setComments([]);
-      }
-    };
-    loadComments();
-  }, [selected]);
+  const goNext = () => {
+    if (!hasNext) return;
+    if (!q.trim()) loadDiscover({ page: page + 1 });
+    else runSearch({ page: page + 1 });
+  };
 
-  // Fetch full game details
-  const loadDetails = async (game) => {
+  const goPrev = () => {
+    if (!hasPrev || page <= 1) return;
+    if (!q.trim()) loadDiscover({ page: page - 1 });
+    else runSearch({ page: page - 1 });
+  };
+
+  const openGame = async (g) => {
+    setSelected(g);
+    setDetails(null);
+    setComments([]);
+    setTab("overview");
     try {
-      const res = await fetch(`/api/game/${game.id}`);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setDetails(data);
-      // ensure scroll to details
-      setTimeout(() => {
-        detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 0);
+      const [dRes, cRes] = await Promise.all([
+        fetch(`/api/game/${g.id}`),
+        fetch(`/api/game/${g.id}/comments`),
+      ]);
+      const d = await dRes.json();
+      const c = await cRes.json();
+      if (d.error) throw new Error(d.error);
+      setDetails(d);
+      setComments(c.comments || []);
+      setTimeout(() => modalRef.current?.focus(), 0);
     } catch (e) {
       console.error(e);
       alert("Failed to load game info");
     }
   };
 
-  // Click handler ONLY on image → select and load details
-  const onGameImageClick = (g) => {
-    setSelected(g);
+  const closeModal = () => {
+    setSelected(null);
     setDetails(null);
-    loadDetails(g);
+    setComments([]);
+    setCommentInput("");
   };
 
   const addComment = async (e) => {
@@ -99,6 +142,7 @@ function App() {
       if (data.error) throw new Error(data.error);
       setCommentInput("");
       setComments((prev) => [...prev, data.comment]);
+      setTab("comments");
     } catch (e) {
       console.error(e);
       alert("Failed to save comment");
@@ -107,170 +151,204 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // 🆕 Clicking the logo brings user back to the homepage (discover)
+  const goHome = () => {
+    setQ("");
+    setPage(1);
+    loadDiscover({ page: 1 });
+  };
+
+  const headerTitle = q.trim()
+    ? <>Results for <strong>{q}</strong> — Page {page}</>
+    : <> <strong>Discover Popular Games</strong> — Page {page} </>;
+
   return (
-    <div style={{ padding: "2rem", display: "grid", gap: "1rem" }}>
-      <h1>Game Search</h1>
+    <div className="layout">
+      <header className="header">
+        <div className="brand" onClick={goHome} role="button" tabIndex={0}>
+          GameVerse
+        </div>
+        <form className="search" onSubmit={onSubmit}>
+          <input
+            className="searchInput"
+            placeholder="Search games…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <button className="btn" type="submit" disabled={loading}>
+            {loading ? "Searching…" : "Search"}
+          </button>
+        </form>
+      </header>
 
-      <form onSubmit={onSubmit} style={{ display: "flex", gap: "0.5rem" }}>
-        <input
-          type="text"
-          placeholder="Search a game (e.g., God of War)"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          style={{ padding: "0.5rem", width: 320 }}
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Searching..." : "Search"}
-        </button>
-      </form>
+      <main className="main">
+        <section className="results">
+          {err && <div className="error">{err}</div>}
 
-      {err && <p style={{ color: "tomato" }}>{err}</p>}
-
-      {/* Results grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, 200px)",
-          gap: 12,
-        }}
-      >
-        {results.map((g) => (
-          <div
-            key={g.id}
-            style={{
-              textAlign: "left",
-              border: "1px solid #555",
-              padding: 8,
-              background: selected?.id === g.id ? "#222" : "transparent",
-            }}
-          >
-            {g.image ? (
-              <img
-                src={g.image}
-                alt={g.name}
-                style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }}
-                onClick={() => onGameImageClick(g)}   // <-- click the image to show info
-              />
-            ) : (
-              <div
-                onClick={() => onGameImageClick(g)}
-                style={{
-                  height: 112,
-                  display: "grid",
-                  placeItems: "center",
-                  background: "#333",
-                  color: "#ddd",
-                  fontSize: 14,
-                  cursor: "pointer",
-                }}
-              >
-                No image
-              </div>
-            )}
-            <div style={{ marginTop: 8, fontWeight: 600 }}>{g.name}</div>
+          <div className="listHeader">
+            <div>{headerTitle}</div>
+            <div className="pager">
+              <button className="btn small ghost" onClick={goPrev} disabled={!hasPrev || loading}>
+                ◀ Prev
+              </button>
+              <button className="btn small" onClick={goNext} disabled={!hasNext || loading}>
+                Next ▶
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* Details + comments */}
-      {selected && (
-        <div
-          ref={detailsRef}
-          style={{
-            marginTop: 8,
-            padding: 12,
-            border: "1px solid #555",
-            display: "grid",
-            gap: 12,
-            maxWidth: 800,
-          }}
-        >
-          {/* GAME INFO */}
-          {details ? (
-            <div style={{ display: "grid", gap: 12 }}>
-              <div style={{ display: "flex", gap: 12 }}>
-                {details.image && (
-                  <img
-                    src={details.image}
-                    alt={details.name}
-                    style={{ width: 200, height: "auto" }}
-                  />
-                )}
-                <div>
-                  <h2 style={{ margin: 0 }}>{details.name}</h2>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>ID: {details.id}</div>
-                  <div>
-                    <strong>Released:</strong> {details.released || "—"}
+          <ul className="list">
+            {(loading ? Array.from({ length: 6 }) : results).map((g, idx) =>
+              loading ? (
+                <li key={idx} className="row">
+                  <div className="rank skeleton" style={{ height: 18 }} />
+                  <div className="cover skeleton" />
+                  <div className="meta">
+                    <div className="skeleton" style={{ height: 18, width: "40%", marginBottom: 6 }} />
+                    <div className="skeleton" style={{ height: 14, width: "70%" }} />
                   </div>
-                  <div>
-                    <strong>Rating:</strong> {details.rating ?? "—"}
-                    {details.metacritic ? ` • Metacritic: ${details.metacritic}` : ""}
+                </li>
+              ) : (
+                <li key={g.id} className="row">
+                  <div className="rank">{(page - 1) * 24 + idx + 1}</div>
+                  <div className="cover" onClick={() => openGame(g)} role="button" tabIndex={0}>
+                    {g.image ? <img src={g.image} alt={g.name} /> : <div className="placeholder">No Image</div>}
                   </div>
-                  <div>
-                    <strong>Genres:</strong>{" "}
-                    {details.genres.length ? details.genres.join(", ") : "—"}
-                  </div>
-                  <div>
-                    <strong>Platforms:</strong>{" "}
-                    {details.platforms.length ? details.platforms.join(", ") : "—"}
-                  </div>
-                  {details.website && (
-                    <div>
-                      <a href={details.website} target="_blank" rel="noreferrer">
-                        Official Website
-                      </a>
+                  <div className="meta">
+                    <div className="title" onClick={() => openGame(g)} role="button" tabIndex={0}>
+                      {g.name}
                     </div>
-                  )}
+                    <div className="sub">
+                      <span className="badge">★ {g.rating ?? "—"}</span>
+                      <span className="badge">📅 {g.released || "—"}</span>
+                    </div>
+                  </div>
+                </li>
+              )
+            )}
+          </ul>
+        </section>
+
+        <aside className="sidebar">
+          <h3 className="sideTitle">Top Rated (this page)</h3>
+          <ol className="topList">
+            {topRated.map((g) => (
+              <li key={g.id} onClick={() => openGame(g)} role="button" tabIndex={0}>
+                <div className="topItem">
+                  <div className="thumb">
+                    {g.image ? <img src={g.image} alt={g.name} /> : <div className="miniPh" />}
+                  </div>
+                  <div className="topMeta">
+                    <div className="topName">{g.name}</div>
+                    <div className="topSub">★ {g.rating ?? "—"}</div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      </main>
+
+      {selected && (
+        <>
+          <div className="backdrop" onClick={closeModal} />
+          <div className="modal" ref={modalRef} tabIndex={-1} aria-modal="true" role="dialog">
+            <button className="closeX" onClick={closeModal} aria-label="Close">✕</button>
+
+            <div className="modalHeader">
+              {details?.image && <img className="modalCover" src={details.image} alt={details?.name} />}
+              <div className="modalHeadMeta">
+                <h2 className="modalTitle">{details?.name || selected.name}</h2>
+                <div className="modalSub">
+                  {details?.released ? `Released: ${details.released}` : "—"} · Rating:{" "}
+                  {details?.rating ?? selected.rating ?? "—"}{" "}
+                  {details?.metacritic ? `· Metacritic: ${details.metacritic}` : ""}
+                </div>
+                <div className="chips">
+                  {details?.genres?.map((g) => (
+                    <span key={g} className="chip">{g}</span>
+                  ))}
                 </div>
               </div>
-              {details.description && (
-                <p style={{ whiteSpace: "pre-wrap", marginTop: 8 }}>{details.description}</p>
-              )}
             </div>
-          ) : (
-            <div>Loading game info…</div>
-          )}
 
-          {/* COMMENT BOX */}
-          <form onSubmit={addComment} style={{ display: "grid", gap: 8 }}>
-            <label htmlFor="comment">Add a comment</label>
-            <textarea
-              id="comment"
-              rows={3}
-              placeholder="Write your thoughts…"
-              value={commentInput}
-              onChange={(e) => setCommentInput(e.target.value)}
-              style={{ padding: 8 }}
-            />
-            <div style={{ display: "flex", gap: 8 }}>
-              <button type="submit" disabled={saving || !commentInput.trim()}>
-                {saving ? "Saving…" : "Post Comment"}
+            <div className="tabs">
+              <button
+                className={`tab ${tab === "overview" ? "active" : ""}`}
+                onClick={() => setTab("overview")}
+              >
+                Overview
               </button>
-              <button type="button" onClick={() => { setSelected(null); setDetails(null); }}>
-                Close
+              <button
+                className={`tab ${tab === "comments" ? "active" : ""}`}
+                onClick={() => setTab("comments")}
+              >
+                Comments ({comments.length})
               </button>
             </div>
-          </form>
 
-          {/* COMMENTS LIST */}
-          <div>
-            <h3 style={{ margin: "8px 0" }}>Comments</h3>
-            {comments.length === 0 ? (
-              <div style={{ opacity: 0.7 }}>No comments yet.</div>
+            {tab === "overview" ? (
+              <div className="panel">
+                <div className="grid2">
+                  <div>
+                    <h4>Synopsis</h4>
+                    <p className="desc">{details?.description || "No description available."}</p>
+                  </div>
+                  <div>
+                    <h4>Information</h4>
+                    <ul className="infoList">
+                      <li><strong>Platforms:</strong> {details?.platforms?.join(", ") || "—"}</li>
+                      <li><strong>Developers:</strong> {details?.developers?.join(", ") || "—"}</li>
+                      <li><strong>Publishers:</strong> {details?.publishers?.join(", ") || "—"}</li>
+                      {details?.website && (
+                        <li>
+                          <a href={details.website} target="_blank" rel="noreferrer">Official Website</a>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
             ) : (
-              <ul style={{ paddingLeft: 18, margin: 0, display: "grid", gap: 6 }}>
-                {comments.map((c, i) => (
-                  <li key={i}>
-                    <div>{c.text}</div>
-                    <div style={{ fontSize: 12, opacity: 0.7 }}>
-                      {new Date(c.at).toLocaleString()}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <div className="panel">
+                <form className="commentForm" onSubmit={addComment}>
+                  <textarea
+                    rows={3}
+                    placeholder="Write your thoughts…"
+                    value={commentInput}
+                    onChange={(e) => setCommentInput(e.target.value)}
+                  />
+                  <div className="right">
+                    <button className="btn" type="submit" disabled={saving || !commentInput.trim()}>
+                      {saving ? "Posting…" : "Post Comment"}
+                    </button>
+                  </div>
+                </form>
+
+                <ul className="commentList">
+                  {comments.length === 0 ? (
+                    <div className="muted">No comments yet.</div>
+                  ) : (
+                    comments.map((c, i) => (
+                      <li key={i} className="comment">
+                        <div className="commentText">{c.text}</div>
+                        <div className="commentMeta">{new Date(c.at).toLocaleString()}</div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
             )}
           </div>
-        </div>
+        </>
       )}
     </div>
   );
