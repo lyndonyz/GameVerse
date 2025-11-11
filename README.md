@@ -52,5 +52,9 @@ Any changes you make will appear on the left side, with the branch icon (the lin
 
 Message in the group chat if we are working on a specific file etc.
 
+## Using Visual Studio Code to Pull Stuff
+
+I can't remember exactly how it works, but it should tell you when theres something to pull when in the branch tab. If not, before you do something on a file, make sure that you click the pull button (the solid arrow pointing to a circle) as well as the refresh button.
+
 Thats about it. Any questions, as before message me, 
 <br>Luki
