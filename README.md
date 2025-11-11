@@ -1,9 +1,9 @@
 # GameVerse
-###GameVerse Web Application for Software Architecture 
+### GameVerse Web Application for Software Architecture 
 
 Node Version: v24.11.0.<br>Make sure you have Visual Studio Code btw.
 
-###For WINDOWS: 
+### For WINDOWS: 
 <br>Use Chocolatey v2.5.1.
 Read how to install Chocolatey on their official documentation for proper installation of node.js
 Ensure you have node installed.
@@ -34,7 +34,7 @@ Once done, you should be able to run the web application locally using:
 Its running Vite + React + Express.
 <br>If it doesn't work btw msg me guys: Luki
 
-###Using Visual Studio Code to Push Stuff
+### Using Visual Studio Code to Push Stuff
 
 I think it should be pretty obvious, but I'll write this just in case.
 
