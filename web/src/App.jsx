@@ -1,47 +1,9 @@
-// import { useState } from 'react'
-// import gameverselogo from './assets/logo.png'
-// import './App.css'
-
-// function App() {
-//   const [count, setCount] = useState(0)
-
-//   useEffect(() => {
-//     fetch("/api")
-//       .then((res) => res.json())
-//       .then((data) => console.log(data));
-//   }, []);
-
-//   return (
-//     <>
-//       <div>
-//         <a href="https://vite.dev" target="_blank">
-//         </a>
-//         <a href="https://www.youtube.com/watch?v=DQbiS0L5ilQ" target="_blank">
-//           <img src={gameverselogo} className="logo react" alt="GameVerse logo" />
-//         </a>
-//       </div>
-//       <h1>GameVerse</h1>
-//       <div className="card">
-//         <button onClick={() => setCount((count) => count + 1)}>
-//           count is {count}
-//         </button>
-//         <p>
-//           Edit <code>src/App.jsx</code> and save to test HMR
-//         </p>
-//       </div>
-//       <p className="read-the-docs">
-//         FYI we use Vite + React + TailwindCSS.
-//       </p>
-//     </>
-//   )
-// }
-
-// export default App
-
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 function App() {
   const [message, setMessage] = useState("");
+  const [gameId, setGameId] = useState("");
+  const [gameName, setGameName] = useState("");
 
   useEffect(() => {
     fetch("/api")
@@ -49,10 +11,41 @@ function App() {
       .then((data) => setMessage(data.message));
   }, []);
 
+  const fetchGame = async () => {
+    if (!gameId) return alert("Please enter a game ID");
+
+    try {
+      const res = await fetch(`/api/game/${gameId}`);
+      const data = await res.json();
+
+      if (data.error) {
+        setGameName("Error: " + data.error);
+      } else {
+        setGameName("name: " + data.name);
+      }
+    } catch (err) {
+      setGameName("Error fetching game");
+      console.error(err);
+    }
+  };
+
   return (
-    <div>
+    <div style={{ padding: "2rem" }}>
       <h1>Frontend connected to backend</h1>
-      <p>{message}</p>
+
+      <hr />
+
+      <h2>RAWG.io games by ID</h2>
+      <input
+        type="text"
+        placeholder="ID"
+        value={gameId}
+        onChange={(e) => setGameId(e.target.value)}
+        style={{ marginRight: "0.5rem" }}
+      />
+      <button onClick={fetchGame}>call</button>
+
+      {gameName && <p>{gameName}</p>}
     </div>
   );
 }
