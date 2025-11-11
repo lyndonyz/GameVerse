@@ -7,12 +7,12 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const [selected, setSelected] = useState(null); // {id,name,image}
+  const [selected, setSelected] = useState(null);   // {id,name,image} from search
+  const [details, setDetails] = useState(null);     // rich details from /api/game/:id
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // ref for the details/comments panel to scroll to it
   const detailsRef = useRef(null);
 
   const search = async () => {
@@ -23,6 +23,7 @@ function App() {
     setErr("");
     setResults([]);
     setSelected(null);
+    setDetails(null);
     setComments([]);
 
     try {
@@ -43,7 +44,7 @@ function App() {
     search();
   };
 
-  // Load comments when a game is selected
+  // When a game is selected, load comments
   useEffect(() => {
     const loadComments = async () => {
       if (!selected) return;
@@ -55,15 +56,33 @@ function App() {
         console.error(e);
         setComments([]);
       }
-
-      // After we set comments, scroll the details panel into view
-      // Use a tiny timeout to ensure DOM is painted
-      setTimeout(() => {
-        detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 0);
     };
     loadComments();
   }, [selected]);
+
+  // Fetch full game details
+  const loadDetails = async (game) => {
+    try {
+      const res = await fetch(`/api/game/${game.id}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setDetails(data);
+      // ensure scroll to details
+      setTimeout(() => {
+        detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 0);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to load game info");
+    }
+  };
+
+  // Click handler ONLY on image → select and load details
+  const onGameImageClick = (g) => {
+    setSelected(g);
+    setDetails(null);
+    loadDetails(g);
+  };
 
   const addComment = async (e) => {
     e.preventDefault();
@@ -79,7 +98,7 @@ function App() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setCommentInput("");
-      setComments((prev) => [...prev, data.comment]); // append locally
+      setComments((prev) => [...prev, data.comment]);
     } catch (e) {
       console.error(e);
       alert("Failed to save comment");
@@ -116,15 +135,12 @@ function App() {
         }}
       >
         {results.map((g) => (
-          <button
+          <div
             key={g.id}
-            type="button"                 // <-- important so it doesn't submit the form
-            onClick={() => setSelected(g)}
             style={{
               textAlign: "left",
               border: "1px solid #555",
               padding: 8,
-              cursor: "pointer",
               background: selected?.id === g.id ? "#222" : "transparent",
             }}
           >
@@ -132,10 +148,12 @@ function App() {
               <img
                 src={g.image}
                 alt={g.name}
-                style={{ width: "100%", height: "auto", display: "block" }}
+                style={{ width: "100%", height: "auto", display: "block", cursor: "pointer" }}
+                onClick={() => onGameImageClick(g)}   // <-- click the image to show info
               />
             ) : (
               <div
+                onClick={() => onGameImageClick(g)}
                 style={{
                   height: 112,
                   display: "grid",
@@ -143,13 +161,14 @@ function App() {
                   background: "#333",
                   color: "#ddd",
                   fontSize: 14,
+                  cursor: "pointer",
                 }}
               >
                 No image
               </div>
             )}
             <div style={{ marginTop: 8, fontWeight: 600 }}>{g.name}</div>
-          </button>
+          </div>
         ))}
       </div>
 
@@ -163,23 +182,56 @@ function App() {
             border: "1px solid #555",
             display: "grid",
             gap: 12,
-            maxWidth: 640,
+            maxWidth: 800,
           }}
         >
-          <div style={{ display: "flex", gap: 12 }}>
-            {selected.image && (
-              <img
-                src={selected.image}
-                alt={selected.name}
-                style={{ width: 160, height: "auto" }}
-              />
-            )}
-            <div>
-              <h2 style={{ margin: 0 }}>{selected.name}</h2>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>ID: {selected.id}</div>
+          {/* GAME INFO */}
+          {details ? (
+            <div style={{ display: "grid", gap: 12 }}>
+              <div style={{ display: "flex", gap: 12 }}>
+                {details.image && (
+                  <img
+                    src={details.image}
+                    alt={details.name}
+                    style={{ width: 200, height: "auto" }}
+                  />
+                )}
+                <div>
+                  <h2 style={{ margin: 0 }}>{details.name}</h2>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>ID: {details.id}</div>
+                  <div>
+                    <strong>Released:</strong> {details.released || "—"}
+                  </div>
+                  <div>
+                    <strong>Rating:</strong> {details.rating ?? "—"}
+                    {details.metacritic ? ` • Metacritic: ${details.metacritic}` : ""}
+                  </div>
+                  <div>
+                    <strong>Genres:</strong>{" "}
+                    {details.genres.length ? details.genres.join(", ") : "—"}
+                  </div>
+                  <div>
+                    <strong>Platforms:</strong>{" "}
+                    {details.platforms.length ? details.platforms.join(", ") : "—"}
+                  </div>
+                  {details.website && (
+                    <div>
+                      <a href={details.website} target="_blank" rel="noreferrer">
+                        Official Website
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {details.description && (
+                <p style={{ whiteSpace: "pre-wrap", marginTop: 8 }}>{details.description}</p>
+              )}
             </div>
-          </div>
+          ) : (
+            <div>Loading game info…</div>
+          )}
 
+          {/* COMMENT BOX */}
           <form onSubmit={addComment} style={{ display: "grid", gap: 8 }}>
             <label htmlFor="comment">Add a comment</label>
             <textarea
@@ -194,12 +246,13 @@ function App() {
               <button type="submit" disabled={saving || !commentInput.trim()}>
                 {saving ? "Saving…" : "Post Comment"}
               </button>
-              <button type="button" onClick={() => setSelected(null)}>
+              <button type="button" onClick={() => { setSelected(null); setDetails(null); }}>
                 Close
               </button>
             </div>
           </form>
 
+          {/* COMMENTS LIST */}
           <div>
             <h3 style={{ margin: "8px 0" }}>Comments</h3>
             {comments.length === 0 ? (

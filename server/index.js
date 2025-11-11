@@ -12,10 +12,10 @@ app.use(express.json());
 // --- In-memory comments store: { [gameId]: [{ text, at }] } ---
 const commentsByGame = Object.create(null);
 
-// Health check
+// Health
 app.get("/api", (_req, res) => res.json({ ok: true }));
 
-// Search by name -> returns id, name, image
+// Search (name + image)
 app.get("/api/search", async (req, res) => {
   const q = (req.query.q || "").trim();
   if (!q) return res.status(400).json({ error: "Missing query ?q=" });
@@ -44,7 +44,7 @@ app.get("/api/search", async (req, res) => {
   }
 });
 
-// Fetch-by-ID (kept for completeness)
+// Game details (rich info for details panel)
 app.get("/api/game/:id", async (req, res) => {
   const gameId = req.params.id;
   const apiKey = process.env.EXTERNAL_API_KEY;
@@ -53,22 +53,40 @@ app.get("/api/game/:id", async (req, res) => {
   try {
     const response = await fetch(`https://api.rawg.io/api/games/${gameId}?key=${apiKey}`);
     if (!response.ok) throw new Error(`RAWG API error: ${response.status}`);
-    const gameData = await response.json();
-    res.json({ name: gameData.name });
+    const g = await response.json();
+
+    const details = {
+      id: g.id,
+      name: g.name,
+      description: g.description_raw || "",
+      released: g.released || null,
+      rating: g.rating || null,
+      metacritic: g.metacritic || null,
+      website: g.website || null,
+      image:
+        g.background_image ||
+        g.background_image_additional ||
+        (g.background_image && g.background_image) ||
+        null,
+      genres: Array.isArray(g.genres) ? g.genres.map((x) => x.name) : [],
+      platforms: Array.isArray(g.platforms)
+        ? g.platforms.map((p) => p.platform?.name).filter(Boolean)
+        : [],
+    };
+
+    res.json(details);
   } catch (error) {
     console.error("RAWG by-id error:", error);
     res.status(500).json({ error: "Failed to fetch game data" });
   }
 });
 
-// --- Comments API ---
-// Get comments for a game
+// Comments
 app.get("/api/game/:id/comments", (req, res) => {
   const { id } = req.params;
   res.json({ comments: commentsByGame[id] || [] });
 });
 
-// Add a comment for a game
 app.post("/api/game/:id/comments", (req, res) => {
   const { id } = req.params;
   const text = (req.body?.text || "").trim();
