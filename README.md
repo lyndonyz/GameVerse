@@ -1,2 +1,2 @@
 # GameVerse
-GameVerse Application for Software Architecture 
+GameVerse Web Application for Software Architecture 
