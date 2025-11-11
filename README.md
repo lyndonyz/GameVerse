@@ -4,9 +4,9 @@
 Node Version: v24.11.0.<br>Make sure you have Visual Studio Code btw.
 
 ## For WINDOWS: 
-<br>Use Chocolatey v2.5.1.
-Read how to install Chocolatey on their official documentation for proper installation of node.js
-Ensure you have node installed.
+Use Chocolatey v2.5.1.
+<br>Read how to install Chocolatey on their official documentation for proper installation of node.js
+<br>Ensure you have node installed.
 
 Check using:
 ```node -v```
@@ -39,8 +39,7 @@ Its running Vite + React + Express.
 I think it should be pretty obvious, but I'll write this just in case.
 
 Go to Visual Studio Code -> File -> Open Folder -> Select 4471 Folder.
-
-Visual Studio Code will then prompt you if you trust this Author or whatever, just say yes.
+<br>Visual Studio Code will then prompt you if you trust this Author or whatever, just say yes.
 
 Any changes you make will appear on the left side, with the branch icon (the lines with 3 circles).
 <br>To commit and push, just click the + symbols on the files you want to commit, and write the message on the top to comment what you did.
