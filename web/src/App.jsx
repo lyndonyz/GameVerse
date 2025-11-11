@@ -51,7 +51,7 @@ function App() {
 
   return (
     <div>
-      <h1>Frontend connected to backend ✅</h1>
+      <h1>Frontend connected to backend</h1>
       <p>{message}</p>
     </div>
   );
