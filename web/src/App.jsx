@@ -1,7 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
+
 function App() {
+        const glowClasses = [
+          "glow-red", "glow-blue", "glow-green", "glow-purple", "glow-orange", "glow-pink",
+          "glow-yellow", "glow-cyan", "glow-teal", "glow-white", "glow-lime", "glow-indigo",
+          "glow-magenta", "glow-sky", "glow-violet", "glow-gold"
+        ]
+
+        function getGlowClass(name) {
+    // Creates a consistent hash value from game name
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash % glowClasses.length);
+    return glowClasses[index];
+  }
+
+
+
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [results, setResults] = useState([]);
@@ -219,9 +238,14 @@ function App() {
               ) : (
                 <li key={g.id} className="row">
                   <div className="rank">{(page - 1) * 24 + idx + 1}</div>
-                  <div className="cover" onClick={() => openGame(g)} role="button" tabIndex={0}>
-                    {g.image ? <img src={g.image} alt={g.name} /> : <div className="placeholder">No Image</div>}
-                  </div>
+                 <div className="cover" onClick={() => openGame(g)} role="button" tabIndex={0}>
+                   {g.image ? (
+                     <img className={`glow-image ${getGlowClass(g.name)}`} src={g.image} alt={g.name} />
+                   ) : (
+                     <div className="placeholder">No Image</div>
+                   )}
+
+                 </div>
                   <div className="meta">
                     <div className="title" onClick={() => openGame(g)} role="button" tabIndex={0}>
                       {g.name}
@@ -240,20 +264,26 @@ function App() {
         <aside className="sidebar">
           <h3 className="sideTitle">Top Rated (this page)</h3>
           <ol className="topList">
-            {topRated.map((g) => (
-              <li key={g.id} onClick={() => openGame(g)} role="button" tabIndex={0}>
-                <div className="topItem">
-                  <div className="thumb">
-                    {g.image ? <img src={g.image} alt={g.name} /> : <div className="miniPh" />}
-                  </div>
-                  <div className="topMeta">
-                    <div className="topName">{g.name}</div>
-                    <div className="topSub">★ {g.rating ?? "—"}</div>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ol>
+  {topRated.map((g, index) => (
+    <li
+      key={g.id}
+      className="topRatedItem"
+      onClick={() => openGame(g)}
+      role="button"
+      tabIndex={0}
+    >
+      <div className="topRatedRank">{index + 1}.</div>
+      <div className="topRatedThumb">
+        {g.image ? <img src={g.image} alt={g.name} /> : <div className="miniPh" />}
+      </div>
+      <div className="topRatedInfo">
+        <div className="topRatedTitle">{g.name}</div>
+        <div className="topRatedRating">★ {g.rating ?? "—"}</div>
+      </div>
+    </li>
+  ))}
+</ol>
+
         </aside>
       </main>
 
@@ -264,9 +294,19 @@ function App() {
             <button className="closeX" onClick={closeModal} aria-label="Close">✕</button>
 
             <div className="modalHeader">
-              {details?.image && <img className="modalCover" src={details.image} alt={details?.name} />}
+             {details?.image && (
+              <img
+                  className={`modalCover glow-image ${getGlowClass(details?.name || selected.name)}`}
+                  src={details.image}
+                  alt={details?.name}
+                />
+              )}
+
               <div className="modalHeadMeta">
-                <h2 className="modalTitle">{details?.name || selected.name}</h2>
+               <h2 className={`modalTitle ${getGlowClass(details?.name || selected.name)}`}>
+                {details?.name || selected.name}
+              </h2>
+
                 <div className="modalSub">
                   {details?.released ? `Released: ${details.released}` : "—"} · Rating:{" "}
                   {details?.rating ?? selected.rating ?? "—"}{" "}
@@ -306,13 +346,40 @@ function App() {
                     <h4>Information</h4>
                     <ul className="infoList">
                       <li><strong>Platforms:</strong> {details?.platforms?.join(", ") || "—"}</li>
+                      <li>
+                            <strong>VR Compatible:</strong>{" "}
+                            {details?.vr_supported === "Yes" ? (
+                              <>
+                                Yes{" "}
+                                <img
+                                  src="/yvr.png"
+                                  alt="VR Compatible"
+                                  style={{ width: "1.4em", verticalAlign: "middle", margin: "0 0.2em" }}
+                                />
+                                ✨ ✔️
+                              </>
+                            ) : (
+                              <>
+                                No 😞 ✖️
+                              </>
+                            )}
+                          </li>
+
                       <li><strong>Developers:</strong> {details?.developers?.join(", ") || "—"}</li>
                       <li><strong>Publishers:</strong> {details?.publishers?.join(", ") || "—"}</li>
                       {details?.website && (
-                        <li>
-                          <a href={details.website} target="_blank" rel="noreferrer">Official Website</a>
-                        </li>
-                      )}
+                          <li>
+                            <a
+                              href={details.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="glow-link"
+                            >
+                              Official Website
+                            </a>
+                          </li>
+                        )}
+
                     </ul>
                   </div>
                 </div>

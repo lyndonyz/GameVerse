@@ -125,6 +125,63 @@ app.get("/api/game/:id", async (req, res) => {
       publishers: Array.isArray(g.publishers) ? g.publishers.map((p) => p.name) : [],
     };
 
+
+
+    // Detect VR support based on tags, platforms, or name
+    // Detect VR support based on tags, platforms, or name
+    const vrKeywords = [
+      // General
+      "vr", "virtual reality", "mixed reality", "extended reality", "xr", "ar vr", "mr", "headset",
+    
+      // Meta / Oculus ecosystem
+      "oculus", "oculus rift", "oculus rift s", "oculus quest", "oculus quest 2",
+      "meta quest", "meta quest 2", "meta quest 3", "meta quest pro",
+    
+      // HTC / Vive ecosystem
+      "vive", "htc vive", "vive pro", "vive pro 2", "vive cosmos", "vive elite",
+      "vive focus", "vive focus 3", "vive xr elite",
+    
+      // Valve
+      "valve index", "index headset", "index controllers",
+    
+      // Sony / PlayStation VR
+      "playstation vr", "psvr", "psvr2", "playstation vr2",
+    
+      // Microsoft / Windows Mixed Reality
+      "windows mixed reality", "wmr", "hp reverb", "reverb g2", "samsung odyssey", "lenovo explorer",
+      "acer mixed reality", "dell visor", "asus mixed reality",
+    
+      // PICO / ByteDance
+      "pico", "pico neo", "pico neo 3", "pico 4", "pico neo link", "pico neo 4 pro",
+    
+      // Varjo (enterprise-grade)
+      "varjo", "varjo aero", "varjo xr-3", "varjo vr-3",
+    
+      // Apple
+      "apple vision pro", "vision pro",
+    
+      // HP / Lenovo / Others
+      "hp reverb g1", "hp reverb g2", "lenovo mirage", "lenovo explorer",
+    
+      // Other brands & dev kits
+      "starvr", "osvr", "deepoon", "piimax", "pimax", "pimax 4k", "pimax 5k", "pimax 8k",
+      "pimax crystal", "pimax reality", "gear vr", "daydream", "google daydream", "cardboard",
+      "samsung gear vr", "gearvr", "merge vr", "homido", "zeiss vr one", "noon vr", "archos vr",
+      "riftcat", "virtual desktop",
+    
+      // Generic platform/tech identifiers
+      "openxr", "steamvr", "meta platform", "mixed reality headset", "vr support"
+    ];
+    const vr_supported =
+      g.tags?.some(t => vrKeywords.some(k => t.name?.toLowerCase().includes(k))) ||
+      g.platforms?.some(p => vrKeywords.some(k => p.platform?.name?.toLowerCase().includes(k))) ||
+      vrKeywords.some(k => g.name?.toLowerCase().includes(k)) ||
+      false;
+      
+    // Attach to the response object
+    details.vr_supported = vr_supported ? "Yes" : "No";
+      
+
     res.json(details);
   } catch (error) {
     console.error("RAWG by-id error:", error);

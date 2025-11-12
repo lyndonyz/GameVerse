@@ -1,15 +1,15 @@
 :root {
-  --bg: #0b0f15;
-  --panel: #111722;
-  --panel-2: #141b27;
-  --panel-3: #0f1621;
-  --text: #e7eef8;
-  --muted: #a6b3c5;
-  --brand: #4ea1ff;
-  --brand-2: #7bd1ff;
-  --border: #203045;
-  --chip: #223349;
-  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --bg: #0a001a;
+  --panel: #14002e;
+  --panel-2: #1b0138;
+  --panel-3: #2c014e;
+  --text: #f0e6ff;
+  --muted: #aa8ccf;
+  --brand: #b400f3;
+  --brand-2: #ff00d4;
+  --border: #3a0059;
+  --chip: #240038;
+  --shadow: 0 8px 24px rgba(191, 0, 255, 0.35);
 }
 
 * {
@@ -54,8 +54,9 @@ body {
 .brand {
   font-weight: 900;
   font-size: 22px;
-  background: linear-gradient(90deg, #8bd1ff, #4ea1ff 60%, #a7e8ff);
+  background: linear-gradient(90deg, #ff00d4, #b400f3, #7b00ff);
   -webkit-background-clip: text;
+  background-clip: text;
   color: transparent;
 }
 
@@ -172,8 +173,12 @@ body {
   transition: 0.1s;
 }
 .row:hover {
-  transform: translateY(-1px);
-  border-color: #34507a;
+  transform: translateY(-3px);;
+  border-color: #ff00d4;
+  box-shadow: 0 0 20px 4px rgba(180, 0, 243, 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+
+
 }
 .rank {
   text-align: center;

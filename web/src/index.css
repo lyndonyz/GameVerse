@@ -1,4 +1,24 @@
-/* index.css — ensures full width and height */
+/* index.css — full layout, updated with neon theme and futuristic font */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600&display=swap');
+
+:root {
+  --bg: #0b0f15;
+  --panel: #111722;
+  --panel-2: #141b27;
+  --panel-3: #0f1621;
+  --text: #e7eef8;
+  --muted: #a6b3c5;
+  --brand: #b400f3;
+  --brand-2: #ff00d4;
+  --border: #362855;
+  --chip: #2b1c3b;
+  --shadow: 0 8px 24px rgba(182, 71, 255, 0.25);
+}
+
+* {
+  box-sizing: border-box;
+}
+
 html, body, #root {
   height: 100%;
   width: 100%;
@@ -7,11 +27,23 @@ html, body, #root {
 }
 
 body {
-  background: #0b0f15;
-  color: #e7eef8;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  overflow: hidden;
+  overflow: auto; /* ✅ Now allows scroll */
 }
+
+.main {
+  display: grid;
+  grid-template-columns: minmax(540px, 1fr) 340px;
+  gap: 16px;
+  padding: 16px;
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* ✅ Add this line */
+}
+
 
 #root {
   max-width: none;
@@ -20,3 +52,226 @@ body {
   height: 100%;
   width: 100%;
 }
+
+/* Brand Title / Logo */
+.brand {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  background: linear-gradient(90deg, #ff00d4, #b400f3, #7b00ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: filter 0.3s ease;
+}
+
+.brand:hover {
+  filter: drop-shadow(0 0 5px #ff00d4);
+}
+
+
+/* === Glow Image Effect === *
+
+
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--panel-2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--brand), var(--brand-2));
+  border-radius: 10px;
+  border: 2px solid var(--panel-2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ff44e4, #c200ff);
+}
+
+
+.topList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+
+
+
+
+.topRatedItem {
+  display: flex;
+  align-items: center;
+  background: var(--panel-3);
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.topRatedItem:hover {
+  background: var(--panel-2);
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px rgba(180, 0, 243, 0.4);
+}
+
+
+
+.topRatedRank {
+  font-weight: bold;
+  color: var(--text);
+  width: 20px;
+  text-align: right;
+}
+
+.topRatedThumb {
+  width: 40px;
+  height: 56px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.topRatedThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.topRatedInfo {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.topRatedTitle {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.topRatedRating {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+
+.topRatedItem:hover .topRatedThumb {
+  box-shadow: 0 0 10px #b400f3;
+}
+
+
+.glow-link {
+  color: white;
+  font-weight: bold;
+  font-style: italic; /* Italics */
+  text-decoration: underline; /* Underline */
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: #ff00d4;
+  text-shadow: 0 0 2px #ff00d4; /* subtle glow even when not hovering */
+  transition: all 0.3s ease;
+}
+
+.glow-link:hover {
+  text-shadow: 0 0 4px #ffffff, 0 0 8px #b400f3, 0 0 12px #ff00d4;
+  text-decoration-thickness: 2px;
+}
+
+
+
+.glow-image {
+  border-radius: 12px;
+  transition: transform 0.3s, box-shadow 0.3s;
+  transform: scale(1);
+
+}
+
+.glow-image:hover {
+  transform: scale(1.03); /* ✅ keep scale only */
+  filter: brightness(1.15);
+  
+
+}
+
+
+
+.modal {
+  box-shadow: none !important;
+}
+
+.modalHeadMeta,
+.modalHeader {
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Optional: keep the neon text glow only */
+.modalTitle {
+  background: none !important;
+  box-shadow: none !important;
+  text-shadow: 0 0 8px currentColor; /* soft text-only glow */
+}
+
+/* ✅ Consistent Glow Color for Image + Title Text */
+.glow-image.glow-red,
+.modalTitle.glow-red      { box-shadow: 0 0 20px 4px #ff3c3c; text-shadow: 0 0 8px #ff3c3c; color: #ffbaba; }
+
+.glow-image.glow-blue,
+.modalTitle.glow-blue     { box-shadow: 0 0 20px 4px #3c9dff; text-shadow: 0 0 8px #3c9dff; color: #b3daff; }
+
+.glow-image.glow-green,
+.modalTitle.glow-green    { box-shadow: 0 0 20px 4px #3cff6b; text-shadow: 0 0 8px #3cff6b; color: #b8ffcb; }
+
+.glow-image.glow-purple,
+.modalTitle.glow-purple   { box-shadow: 0 0 20px 4px #a93cff; text-shadow: 0 0 8px #a93cff; color: #d7b3ff; }
+
+.glow-image.glow-orange,
+.modalTitle.glow-orange   { box-shadow: 0 0 20px 4px #ff993c; text-shadow: 0 0 8px #ff993c; color: #ffd5b0; }
+
+.glow-image.glow-pink,
+.modalTitle.glow-pink     { box-shadow: 0 0 20px 4px #ff3cb5; text-shadow: 0 0 8px #ff3cb5; color: #ffb3e3; }
+
+.glow-image.glow-yellow,
+.modalTitle.glow-yellow   { box-shadow: 0 0 20px 4px #ffe93c; text-shadow: 0 0 8px #ffe93c; color: #fff7b8; }
+
+.glow-image.glow-cyan,
+.modalTitle.glow-cyan     { box-shadow: 0 0 20px 4px #3cffff; text-shadow: 0 0 8px #3cffff; color: #b3ffff; }
+
+.glow-image.glow-teal,
+.modalTitle.glow-teal     { box-shadow: 0 0 20px 4px #3cffd4; text-shadow: 0 0 8px #3cffd4; color: #b3fff0; }
+
+.glow-image.glow-white,
+.modalTitle.glow-white    { box-shadow: 0 0 20px 4px #ffffff; text-shadow: 0 0 8px #ffffff; color: #ffffff; }
+
+.glow-image.glow-lime,
+.modalTitle.glow-lime     { box-shadow: 0 0 20px 4px #aaff00; text-shadow: 0 0 8px #aaff00; color: #eaff9b; }
+
+.glow-image.glow-indigo,
+.modalTitle.glow-indigo   { box-shadow: 0 0 20px 4px #7f3cff; text-shadow: 0 0 8px #7f3cff; color: #c7b3ff; }
+
+.glow-image.glow-magenta,
+.modalTitle.glow-magenta  { box-shadow: 0 0 20px 4px #ff3cff; text-shadow: 0 0 8px #ff3cff; color: #ffb3ff; }
+
+.glow-image.glow-sky,
+.modalTitle.glow-sky      { box-shadow: 0 0 20px 4px #00ccff; text-shadow: 0 0 8px #00ccff; color: #b3ecff; }
+
+.glow-image.glow-violet,
+.modalTitle.glow-violet   { box-shadow: 0 0 20px 4px #c43cff; text-shadow: 0 0 8px #c43cff; color: #e0b3ff; }
+
+.glow-image.glow-gold,
+.modalTitle.glow-gold     { box-shadow: 0 0 20px 4px #ffd700; text-shadow: 0 0 8px #ffd700; color: #fff5b3; }
