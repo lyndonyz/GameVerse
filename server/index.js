@@ -236,6 +236,7 @@ app.get("/api/game/:id", async (req, res) => {
       // Generic platform/tech identifiers
       "openxr", "steamvr", "meta platform", "mixed reality headset", "vr support"
     ];
+    
     const vr_supported =
       g.tags?.some(t => vrKeywords.some(k => t.name?.toLowerCase().includes(k))) ||
       g.platforms?.some(p => vrKeywords.some(k => p.platform?.name?.toLowerCase().includes(k))) ||

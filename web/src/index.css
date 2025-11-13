@@ -275,3 +275,43 @@ body {
 
 .glow-image.glow-gold,
 .modalTitle.glow-gold     { box-shadow: 0 0 20px 4px #ffd700; text-shadow: 0 0 8px #ffd700; color: #fff5b3; }
+
+
+
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: 'Rajdhani', sans-serif;
+  transition: all 0.25s ease;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(180, 0, 243, 0.25);
+
+  /* Makes room for custom arrow */
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23ff00d4' height='16' width='16' xmlns='http://www.w3.org/2000/svg'><polygon points='0,0 16,0 8,8'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+/* Force dark dropdown for Chrome/Edge on Windows */
+select.select option {
+  background-color: var(--panel-3) !important;
+  color: var(--text) !important;
+}
+
+select.select optgroup {
+  background-color: var(--panel-3) !important;
+  color: var(--text) !important;
+}
+
+
+

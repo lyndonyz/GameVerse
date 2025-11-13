@@ -508,7 +508,7 @@ function App() {
                   <div>
                     <h4>Information</h4>
                     <ul className="infoList">
-                       <li><strong>Platforms:</strong> {details?.platforms?.join(", ") || "—"}</li>
+                      <li><strong>Platforms:</strong> {details?.platforms?.join(", ") || "—"}</li>
                       <li>
                         <strong>VR Compatible:</strong>{" "}
                         {details?.vr_supported === "Yes" ? (
@@ -528,18 +528,8 @@ function App() {
                         )}
                       </li>
 
-                      <li>
-                        <strong>Platforms:</strong>{" "}
-                        {details?.platforms?.join(", ") || "—"}
-                      </li>
-                      <li>
-                        <strong>Developers:</strong>{" "}
-                        {details?.developers?.join(", ") || "—"}
-                      </li>
-                      <li>
-                        <strong>Publishers:</strong>{" "}
-                        {details?.publishers?.join(", ") || "—"}
-                      </li>
+                      <li><strong>Developers:</strong> {details?.developers?.join(", ") || "—"}</li>
+                      <li><strong>Publishers:</strong> {details?.publishers?.join(", ") || "—"}</li>
                       {details?.website && (
                         <li>
                           <a
@@ -550,6 +540,7 @@ function App() {
                           >
                             Official Website
                           </a>
+
                         </li>
                       )}
                     </ul>
