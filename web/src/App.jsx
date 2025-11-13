@@ -1,4 +1,3 @@
-// App.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
@@ -16,6 +15,9 @@ function App() {
   const [categories, setCategories] = useState([]);
   const [cat, setCat] = useState(""); // RAWG genre slug
 
+  // --- Sort state ---
+  const [sortOrder, setSortOrder] = useState(""); // "", "high", "low"
+
   // --- Details / comments modal state ---
   const [selected, setSelected] = useState(null); // {id, name, image, rating, released}
   const [details, setDetails] = useState(null);   // full game info
@@ -27,13 +29,27 @@ function App() {
   // Tabs like MAL
   const [tab, setTab] = useState("overview");
 
-  // Sidebar: Top rated from current results
+  // Helper: apply sort to current results for display
+  const displayedResults = useMemo(() => {
+    if (!sortOrder) return results;
+
+    const rated = results.filter((r) => typeof r.rating === "number");
+    const unrated = results.filter((r) => r.rating == null);
+
+    rated.sort((a, b) =>
+      sortOrder === "high" ? b.rating - a.rating : a.rating - b.rating
+    );
+
+    return [...rated, ...unrated];
+  }, [results, sortOrder]);
+
+  // Sidebar: Top rated from current displayed results
   const topRated = useMemo(() => {
-    return [...results]
+    return [...displayedResults]
       .filter((r) => r.rating != null)
       .sort((a, b) => b.rating - a.rating)
       .slice(0, 5);
-  }, [results]);
+  }, [displayedResults]);
 
   // --- API helpers ---
   const loadDiscover = async (opts = {}) => {
@@ -88,7 +104,11 @@ function App() {
     setLoading(true);
     setErr("");
     try {
-      const r = await fetch(`/api/searchByCategory?genre=${encodeURIComponent(genre)}&page=${targetPage}&page_size=24`);
+      const r = await fetch(
+        `/api/searchByCategory?genre=${encodeURIComponent(
+          genre
+        )}&page=${targetPage}&page_size=24`
+      );
       const data = await r.json();
       if (data.error) throw new Error(data.error);
       setResults(data.results || []);
@@ -211,32 +231,47 @@ function App() {
     setQ("");
     setCat("");
     setPage(1);
+    setSortOrder("");
     loadDiscover({ page: 1 });
   };
 
   const headerTitle = cat
-    ? <>Category: <strong>{cat}</strong> — Page {page}</>
+    ? (
+      <>
+        Category: <strong>{cat}</strong> — Page {page}
+      </>
+      )
     : q.trim()
-    ? <>Results for <strong>{q}</strong> — Page {page}</>
-    : <> <strong>Discover Popular Games</strong> — Page {page} </>;
+    ? (
+      <>
+        Results for <strong>{q}</strong> — Page {page}
+      </>
+      )
+    : (
+      <>
+        <strong>Discover Popular Games</strong> — Page {page}
+      </>
+      );
 
   return (
     <div className="layout">
       {/* Header */}
       <header className="header">
         <div className="brand" onClick={goHome} role="button" tabIndex={0}>
-          GameVerse
+          GAMEVERSE
         </div>
 
         <form className="search" onSubmit={onSubmit}>
           <input
             className="searchInput"
-            placeholder="Search games…"
+            placeholder="Search games..."
             value={q}
             onChange={(e) => {
               setQ(e.target.value);
             }}
           />
+
+          {/* Category filter */}
           <select
             className="select"
             value={cat}
@@ -244,6 +279,7 @@ function App() {
               const next = e.target.value;
               setCat(next);
               setQ("");
+              setPage(1);
               if (next) loadByCategory({ genre: next, page: 1 });
               else loadDiscover({ page: 1 });
             }}
@@ -255,6 +291,18 @@ function App() {
               </option>
             ))}
           </select>
+
+          {/* Sort by rating */}
+          <select
+            className="select"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+          >
+            <option value="">Sort by rating</option>
+            <option value="high">Highest → Lowest</option>
+            <option value="low">Lowest → Highest</option>
+          </select>
+
           <button className="btn" type="submit" disabled={loading}>
             {loading ? "Searching…" : "Search"}
           </button>
@@ -270,45 +318,84 @@ function App() {
           <div className="listHeader">
             <div>{headerTitle}</div>
             <div className="pager">
-              <button className="btn small ghost" onClick={goPrev} disabled={!hasPrev || loading}>
+              <button
+                className="btn small ghost"
+                onClick={goPrev}
+                disabled={!hasPrev || loading}
+              >
                 ◀ Prev
               </button>
-              <button className="btn small" onClick={goNext} disabled={!hasNext || loading}>
+              <button
+                className="btn small"
+                onClick={goNext}
+                disabled={!hasNext || loading}
+              >
                 Next ▶
               </button>
             </div>
           </div>
 
           <ul className="list">
-            {(loading ? Array.from({ length: 6 }) : results).map((g, idx) =>
-              loading ? (
-                <li key={idx} className="row">
-                  <div className="rank skeleton" style={{ height: 18 }} />
-                  <div className="cover skeleton" />
-                  <div className="meta">
-                    <div className="skeleton" style={{ height: 18, width: "40%", marginBottom: 6 }} />
-                    <div className="skeleton" style={{ height: 14, width: "70%" }} />
-                  </div>
-                </li>
-              ) : (
-                <li key={g.id} className="row">
-                  <div className="rank">{(page - 1) * 24 + idx + 1}</div>
-
-                  <div className="cover" onClick={() => openGame(g)} role="button" tabIndex={0}>
-                    {g.image ? <img src={g.image} alt={g.name} /> : <div className="placeholder">No Image</div>}
-                  </div>
-
-                  <div className="meta">
-                    <div className="title" onClick={() => openGame(g)} role="button" tabIndex={0}>
-                      {g.name}
+            {(loading ? Array.from({ length: 6 }) : displayedResults).map(
+              (g, idx) =>
+                loading ? (
+                  <li key={idx} className="row">
+                    <div className="rank skeleton" style={{ height: 18 }} />
+                    <div className="cover skeleton" />
+                    <div className="meta">
+                      <div
+                        className="skeleton"
+                        style={{
+                          height: 18,
+                          width: "40%",
+                          marginBottom: 6,
+                        }}
+                      />
+                      <div
+                        className="skeleton"
+                        style={{ height: 14, width: "70%" }}
+                      />
                     </div>
-                    <div className="sub">
-                      <span className="badge">★ {g.rating ?? "—"}</span>
-                      <span className="badge">📅 {g.released || "—"}</span>
+                  </li>
+                ) : (
+                  <li key={g.id} className="row">
+                    <div className="rank">
+                      {(page - 1) * 24 + idx + 1}
                     </div>
-                  </div>
-                </li>
-              )
+
+                    <div
+                      className="cover"
+                      onClick={() => openGame(g)}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      {g.image ? (
+                        <img src={g.image} alt={g.name} />
+                      ) : (
+                        <div className="placeholder">No Image</div>
+                      )}
+                    </div>
+
+                    <div className="meta">
+                      <div
+                        className="title"
+                        onClick={() => openGame(g)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        {g.name}
+                      </div>
+                      <div className="sub">
+                        <span className="badge">
+                          ★ {g.rating ?? "—"}
+                        </span>
+                        <span className="badge">
+                          📅 {g.released || "—"}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                )
             )}
           </ul>
         </section>
@@ -318,10 +405,19 @@ function App() {
           <h3 className="sideTitle">Top Rated (this page)</h3>
           <ol className="topList">
             {topRated.map((g) => (
-              <li key={g.id} onClick={() => openGame(g)} role="button" tabIndex={0}>
+              <li
+                key={g.id}
+                onClick={() => openGame(g)}
+                role="button"
+                tabIndex={0}
+              >
                 <div className="topItem">
                   <div className="thumb">
-                    {g.image ? <img src={g.image} alt={g.name} /> : <div className="miniPh" />}
+                    {g.image ? (
+                      <img src={g.image} alt={g.name} />
+                    ) : (
+                      <div className="miniPh" />
+                    )}
                   </div>
                   <div className="topMeta">
                     <div className="topName">{g.name}</div>
@@ -338,21 +434,48 @@ function App() {
       {selected && (
         <>
           <div className="backdrop" onClick={closeModal} />
-          <div className="modal" ref={modalRef} tabIndex={-1} aria-modal="true" role="dialog">
-            <button className="closeX" onClick={closeModal} aria-label="Close">✕</button>
+          <div
+            className="modal"
+            ref={modalRef}
+            tabIndex={-1}
+            aria-modal="true"
+            role="dialog"
+          >
+            <button
+              className="closeX"
+              onClick={closeModal}
+              aria-label="Close"
+            >
+              ✕
+            </button>
 
             <div className="modalHeader">
-              {details?.image && <img className="modalCover" src={details.image} alt={details?.name} />}
+              {details?.image && (
+                <img
+                  className="modalCover"
+                  src={details.image}
+                  alt={details?.name}
+                />
+              )}
               <div className="modalHeadMeta">
-                <h2 className="modalTitle">{details?.name || selected.name}</h2>
+                <h2 className="modalTitle">
+                  {details?.name || selected.name}
+                </h2>
                 <div className="modalSub">
-                  {details?.released ? `Released: ${details.released}` : "—"} · Rating:{" "}
+                  {details?.released
+                    ? `Released: ${details.released}`
+                    : "—"}{" "}
+                  · Rating:{" "}
                   {details?.rating ?? selected.rating ?? "—"}{" "}
-                  {details?.metacritic ? `· Metacritic: ${details.metacritic}` : ""}
+                  {details?.metacritic
+                    ? `· Metacritic: ${details.metacritic}`
+                    : ""}
                 </div>
                 <div className="chips">
                   {details?.genres?.map((g) => (
-                    <span key={g} className="chip">{g}</span>
+                    <span key={g} className="chip">
+                      {g}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -378,17 +501,55 @@ function App() {
                 <div className="grid2">
                   <div>
                     <h4>Synopsis</h4>
-                    <p className="desc">{details?.description || "No description available."}</p>
+                    <p className="desc">
+                      {details?.description || "No description available."}
+                    </p>
                   </div>
                   <div>
                     <h4>Information</h4>
                     <ul className="infoList">
-                      <li><strong>Platforms:</strong> {details?.platforms?.join(", ") || "—"}</li>
-                      <li><strong>Developers:</strong> {details?.developers?.join(", ") || "—"}</li>
-                      <li><strong>Publishers:</strong> {details?.publishers?.join(", ") || "—"}</li>
+                       <li><strong>Platforms:</strong> {details?.platforms?.join(", ") || "—"}</li>
+                      <li>
+                        <strong>VR Compatible:</strong>{" "}
+                        {details?.vr_supported === "Yes" ? (
+                          <>
+                            Yes{" "}
+                            <img
+                              src="/yvr.png"
+                              alt="VR Compatible"
+                              style={{ width: "1.4em", verticalAlign: "middle", margin: "0 0.2em" }}
+                            />
+                            ✨ ✔️
+                          </>
+                        ) : (
+                          <>
+                            No 😞 ✖️
+                          </>
+                        )}
+                      </li>
+
+                      <li>
+                        <strong>Platforms:</strong>{" "}
+                        {details?.platforms?.join(", ") || "—"}
+                      </li>
+                      <li>
+                        <strong>Developers:</strong>{" "}
+                        {details?.developers?.join(", ") || "—"}
+                      </li>
+                      <li>
+                        <strong>Publishers:</strong>{" "}
+                        {details?.publishers?.join(", ") || "—"}
+                      </li>
                       {details?.website && (
                         <li>
-                          <a href={details.website} target="_blank" rel="noreferrer">Official Website</a>
+                          <a
+                            href={details.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="glow-link"
+                          >
+                            Official Website
+                          </a>
                         </li>
                       )}
                     </ul>
@@ -405,7 +566,11 @@ function App() {
                     onChange={(e) => setCommentInput(e.target.value)}
                   />
                   <div className="right">
-                    <button className="btn" type="submit" disabled={saving || !commentInput.trim()}>
+                    <button
+                      className="btn"
+                      type="submit"
+                      disabled={saving || !commentInput.trim()}
+                    >
                       {saving ? "Posting…" : "Post Comment"}
                     </button>
                   </div>
@@ -418,7 +583,9 @@ function App() {
                     comments.map((c, i) => (
                       <li key={i} className="comment">
                         <div className="commentText">{c.text}</div>
-                        <div className="commentMeta">{new Date(c.at).toLocaleString()}</div>
+                        <div className="commentMeta">
+                          {new Date(c.at).toLocaleString()}
+                        </div>
                       </li>
                     ))
                   )}
