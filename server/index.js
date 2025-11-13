@@ -24,7 +24,6 @@ app.get("/api/discover", async (req, res) => {
   const page = Number(req.query.page || 1);
 
   try {
-    // Use ordering that tends to surface popular/widely-added titles
     const url =
       `https://api.rawg.io/api/games?key=${apiKey}` +
       `&ordering=-added&page=${page}&page_size=${pageSize}`;
@@ -54,7 +53,7 @@ app.get("/api/discover", async (req, res) => {
   }
 });
 
-// Search (supports pagination) -> returns id, name, image, rating, released
+// --- Text Search ---
 app.get("/api/search", async (req, res) => {
   const q = (req.query.q || "").trim();
   const page = Number(req.query.page || 1);
@@ -93,7 +92,72 @@ app.get("/api/search", async (req, res) => {
   }
 });
 
-// Game details (rich info for details panel)
+// --- Categories (RAWG genres) ---
+app.get("/api/categories", async (_req, res) => {
+  const apiKey = process.env.EXTERNAL_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
+
+  try {
+    const r = await fetch(`https://api.rawg.io/api/genres?key=${apiKey}`);
+    if (!r.ok) throw new Error(`RAWG genres error: ${r.status}`);
+    const json = await r.json();
+
+    const categories = (json.results || []).map((g) => ({
+      id: g.id,
+      name: g.name,
+      slug: g.slug, // use this slug when filtering (&genres=slug)
+      games_count: g.games_count ?? null,
+    }));
+
+    res.json({ categories });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to load categories" });
+  }
+});
+
+// --- Search by Category (genre) ---
+app.get("/api/searchByCategory", async (req, res) => {
+  const apiKey = process.env.EXTERNAL_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
+
+  const genre = (req.query.genre || "").trim(); // RAWG expects slug(s)
+  const page = Number(req.query.page || 1);
+  const pageSize = Number(req.query.page_size || 24);
+  if (!genre) return res.status(400).json({ error: "Missing ?genre=<slug>" });
+
+  try {
+    const url =
+      `https://api.rawg.io/api/games?key=${apiKey}` +
+      `&genres=${encodeURIComponent(genre)}&page=${page}&page_size=${pageSize}&ordering=-added`;
+
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`RAWG category search error: ${r.status}`);
+    const json = await r.json();
+
+    const results = (json.results || []).map((g) => ({
+      id: g.id,
+      name: g.name,
+      image: g.background_image || g.background_image_additional || null,
+      rating: g.rating ?? null,
+      released: g.released ?? null,
+    }));
+
+    res.json({
+      results,
+      page,
+      pageSize,
+      hasNext: Boolean(json.next),
+      hasPrev: Boolean(json.previous),
+      genre,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Failed to search by category" });
+  }
+});
+
+// --- Game details ---
 app.get("/api/game/:id", async (req, res) => {
   const gameId = req.params.id;
   const apiKey = process.env.EXTERNAL_API_KEY;
@@ -189,7 +253,7 @@ app.get("/api/game/:id", async (req, res) => {
   }
 });
 
-// Comments
+// --- Comments (in-memory demo) ---
 app.get("/api/game/:id/comments", (req, res) => {
   const { id } = req.params;
   res.json({ comments: commentsByGame[id] || [] });

@@ -1,26 +1,9 @@
+// App.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
-
 function App() {
-        const glowClasses = [
-          "glow-red", "glow-blue", "glow-green", "glow-purple", "glow-orange", "glow-pink",
-          "glow-yellow", "glow-cyan", "glow-teal", "glow-white", "glow-lime", "glow-indigo",
-          "glow-magenta", "glow-sky", "glow-violet", "glow-gold"
-        ]
-
-        function getGlowClass(name) {
-    // Creates a consistent hash value from game name
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash % glowClasses.length);
-    return glowClasses[index];
-  }
-
-
-
+  // --- Search / list state ---
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [results, setResults] = useState([]);
@@ -29,14 +12,22 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  const [selected, setSelected] = useState(null);
-  const [details, setDetails] = useState(null);
+  // --- Category state ---
+  const [categories, setCategories] = useState([]);
+  const [cat, setCat] = useState(""); // RAWG genre slug
+
+  // --- Details / comments modal state ---
+  const [selected, setSelected] = useState(null); // {id, name, image, rating, released}
+  const [details, setDetails] = useState(null);   // full game info
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
   const [saving, setSaving] = useState(false);
   const modalRef = useRef(null);
+
+  // Tabs like MAL
   const [tab, setTab] = useState("overview");
 
+  // Sidebar: Top rated from current results
   const topRated = useMemo(() => {
     return [...results]
       .filter((r) => r.rating != null)
@@ -68,7 +59,7 @@ function App() {
   const runSearch = async (opts = {}) => {
     const query = (opts.q ?? q).trim();
     const targetPage = opts.page ?? page;
-    if (!query) return;
+    if (!query) return; // empty handled by discover or category
     setLoading(true);
     setErr("");
     try {
@@ -89,31 +80,67 @@ function App() {
     }
   };
 
-  // Load discover on initial mount
+  const loadByCategory = async (opts = {}) => {
+    const genre = (opts.genre ?? cat).trim();
+    const targetPage = opts.page ?? 1;
+    if (!genre) return;
+
+    setLoading(true);
+    setErr("");
+    try {
+      const r = await fetch(`/api/searchByCategory?genre=${encodeURIComponent(genre)}&page=${targetPage}&page_size=24`);
+      const data = await r.json();
+      if (data.error) throw new Error(data.error);
+      setResults(data.results || []);
+      setHasNext(Boolean(data.hasNext));
+      setHasPrev(Boolean(data.hasPrev));
+      setPage(data.page || targetPage);
+    } catch (e) {
+      console.error(e);
+      setErr("Failed to load category");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Initial home feed + categories
   useEffect(() => {
     loadDiscover({ page: 1 });
+    (async () => {
+      try {
+        const r = await fetch("/api/categories");
+        const data = await r.json();
+        if (data?.categories) setCategories(data.categories);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
   }, []);
 
   const onSubmit = (e) => {
     e.preventDefault();
     if (!q.trim()) {
-      setPage(1);
-      loadDiscover({ page: 1 });
+      // if query empty, use category if set, otherwise discover
+      if (cat) loadByCategory({ page: 1 });
+      else loadDiscover({ page: 1 });
       return;
     }
+    setCat(""); // typing a query clears category filter
     setPage(1);
     runSearch({ page: 1 });
   };
 
+  // Pagination controls (work for discover, text, category)
   const goNext = () => {
     if (!hasNext) return;
-    if (!q.trim()) loadDiscover({ page: page + 1 });
+    if (cat) loadByCategory({ page: page + 1 });
+    else if (!q.trim()) loadDiscover({ page: page + 1 });
     else runSearch({ page: page + 1 });
   };
-
   const goPrev = () => {
     if (!hasPrev || page <= 1) return;
-    if (!q.trim()) loadDiscover({ page: page - 1 });
+    if (cat) loadByCategory({ page: page - 1 });
+    else if (!q.trim()) loadDiscover({ page: page - 1 });
     else runSearch({ page: page - 1 });
   };
 
@@ -170,6 +197,7 @@ function App() {
     }
   };
 
+  // ESC closes modal
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") closeModal();
@@ -178,37 +206,64 @@ function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // 🆕 Clicking the logo brings user back to the homepage (discover)
+  // Brand click = go home (discover)
   const goHome = () => {
     setQ("");
+    setCat("");
     setPage(1);
     loadDiscover({ page: 1 });
   };
 
-  const headerTitle = q.trim()
+  const headerTitle = cat
+    ? <>Category: <strong>{cat}</strong> — Page {page}</>
+    : q.trim()
     ? <>Results for <strong>{q}</strong> — Page {page}</>
     : <> <strong>Discover Popular Games</strong> — Page {page} </>;
 
   return (
     <div className="layout">
+      {/* Header */}
       <header className="header">
         <div className="brand" onClick={goHome} role="button" tabIndex={0}>
           GameVerse
         </div>
+
         <form className="search" onSubmit={onSubmit}>
           <input
             className="searchInput"
             placeholder="Search games…"
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) => {
+              setQ(e.target.value);
+            }}
           />
+          <select
+            className="select"
+            value={cat}
+            onChange={(e) => {
+              const next = e.target.value;
+              setCat(next);
+              setQ("");
+              if (next) loadByCategory({ genre: next, page: 1 });
+              else loadDiscover({ page: 1 });
+            }}
+          >
+            <option value="">All categories</option>
+            {categories.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+          </select>
           <button className="btn" type="submit" disabled={loading}>
             {loading ? "Searching…" : "Search"}
           </button>
         </form>
       </header>
 
+      {/* Main */}
       <main className="main">
+        {/* Results */}
         <section className="results">
           {err && <div className="error">{err}</div>}
 
@@ -238,14 +293,11 @@ function App() {
               ) : (
                 <li key={g.id} className="row">
                   <div className="rank">{(page - 1) * 24 + idx + 1}</div>
-                 <div className="cover" onClick={() => openGame(g)} role="button" tabIndex={0}>
-                   {g.image ? (
-                     <img className={`glow-image ${getGlowClass(g.name)}`} src={g.image} alt={g.name} />
-                   ) : (
-                     <div className="placeholder">No Image</div>
-                   )}
 
-                 </div>
+                  <div className="cover" onClick={() => openGame(g)} role="button" tabIndex={0}>
+                    {g.image ? <img src={g.image} alt={g.name} /> : <div className="placeholder">No Image</div>}
+                  </div>
+
                   <div className="meta">
                     <div className="title" onClick={() => openGame(g)} role="button" tabIndex={0}>
                       {g.name}
@@ -261,32 +313,28 @@ function App() {
           </ul>
         </section>
 
+        {/* Sidebar */}
         <aside className="sidebar">
           <h3 className="sideTitle">Top Rated (this page)</h3>
           <ol className="topList">
-  {topRated.map((g, index) => (
-    <li
-      key={g.id}
-      className="topRatedItem"
-      onClick={() => openGame(g)}
-      role="button"
-      tabIndex={0}
-    >
-      <div className="topRatedRank">{index + 1}.</div>
-      <div className="topRatedThumb">
-        {g.image ? <img src={g.image} alt={g.name} /> : <div className="miniPh" />}
-      </div>
-      <div className="topRatedInfo">
-        <div className="topRatedTitle">{g.name}</div>
-        <div className="topRatedRating">★ {g.rating ?? "—"}</div>
-      </div>
-    </li>
-  ))}
-</ol>
-
+            {topRated.map((g) => (
+              <li key={g.id} onClick={() => openGame(g)} role="button" tabIndex={0}>
+                <div className="topItem">
+                  <div className="thumb">
+                    {g.image ? <img src={g.image} alt={g.name} /> : <div className="miniPh" />}
+                  </div>
+                  <div className="topMeta">
+                    <div className="topName">{g.name}</div>
+                    <div className="topSub">★ {g.rating ?? "—"}</div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
         </aside>
       </main>
 
+      {/* Modal (details + tabs + comments) */}
       {selected && (
         <>
           <div className="backdrop" onClick={closeModal} />
@@ -294,19 +342,9 @@ function App() {
             <button className="closeX" onClick={closeModal} aria-label="Close">✕</button>
 
             <div className="modalHeader">
-             {details?.image && (
-              <img
-                  className={`modalCover glow-image ${getGlowClass(details?.name || selected.name)}`}
-                  src={details.image}
-                  alt={details?.name}
-                />
-              )}
-
+              {details?.image && <img className="modalCover" src={details.image} alt={details?.name} />}
               <div className="modalHeadMeta">
-               <h2 className={`modalTitle ${getGlowClass(details?.name || selected.name)}`}>
-                {details?.name || selected.name}
-              </h2>
-
+                <h2 className="modalTitle">{details?.name || selected.name}</h2>
                 <div className="modalSub">
                   {details?.released ? `Released: ${details.released}` : "—"} · Rating:{" "}
                   {details?.rating ?? selected.rating ?? "—"}{" "}
@@ -346,40 +384,13 @@ function App() {
                     <h4>Information</h4>
                     <ul className="infoList">
                       <li><strong>Platforms:</strong> {details?.platforms?.join(", ") || "—"}</li>
-                      <li>
-                            <strong>VR Compatible:</strong>{" "}
-                            {details?.vr_supported === "Yes" ? (
-                              <>
-                                Yes{" "}
-                                <img
-                                  src="/yvr.png"
-                                  alt="VR Compatible"
-                                  style={{ width: "1.4em", verticalAlign: "middle", margin: "0 0.2em" }}
-                                />
-                                ✨ ✔️
-                              </>
-                            ) : (
-                              <>
-                                No 😞 ✖️
-                              </>
-                            )}
-                          </li>
-
                       <li><strong>Developers:</strong> {details?.developers?.join(", ") || "—"}</li>
                       <li><strong>Publishers:</strong> {details?.publishers?.join(", ") || "—"}</li>
                       {details?.website && (
-                          <li>
-                            <a
-                              href={details.website}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="glow-link"
-                            >
-                              Official Website
-                            </a>
-                          </li>
-                        )}
-
+                        <li>
+                          <a href={details.website} target="_blank" rel="noreferrer">Official Website</a>
+                        </li>
+                      )}
                     </ul>
                   </div>
                 </div>
