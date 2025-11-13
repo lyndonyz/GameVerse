@@ -384,11 +384,38 @@ function App() {
                     <h4>Information</h4>
                     <ul className="infoList">
                       <li><strong>Platforms:</strong> {details?.platforms?.join(", ") || "—"}</li>
+                      <li>
+                        <strong>VR Compatible:</strong>{" "}
+                        {details?.vr_supported === "Yes" ? (
+                          <>
+                            Yes{" "}
+                            <img
+                              src="/yvr.png"
+                              alt="VR Compatible"
+                              style={{ width: "1.4em", verticalAlign: "middle", margin: "0 0.2em" }}
+                            />
+                            ✨ ✔️
+                          </>
+                        ) : (
+                          <>
+                            No 😞 ✖️
+                          </>
+                        )}
+                      </li>
+
                       <li><strong>Developers:</strong> {details?.developers?.join(", ") || "—"}</li>
                       <li><strong>Publishers:</strong> {details?.publishers?.join(", ") || "—"}</li>
                       {details?.website && (
                         <li>
-                          <a href={details.website} target="_blank" rel="noreferrer">Official Website</a>
+                          <a
+                            href={details.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="glow-link"
+                          >
+                            Official Website
+                          </a>
+
                         </li>
                       )}
                     </ul>
