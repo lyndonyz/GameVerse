@@ -1,4 +1,4 @@
-// index.js
+// index.js (FULL UPDATED FILE)
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -9,13 +9,13 @@ const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
-// --- In-memory comments store: { [gameId]: [{ text, at }] } ---
+// --- In-memory comments store ---
 const commentsByGame = Object.create(null);
 
 // Health
 app.get("/api", (_req, res) => res.json({ ok: true }));
 
-// --- Discover (popular) games for the home page ---
+// --- Discover ---
 app.get("/api/discover", async (req, res) => {
   const apiKey = process.env.EXTERNAL_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
@@ -53,7 +53,7 @@ app.get("/api/discover", async (req, res) => {
   }
 });
 
-// --- Text Search ---
+// --- Search ---
 app.get("/api/search", async (req, res) => {
   const q = (req.query.q || "").trim();
   const page = Number(req.query.page || 1);
@@ -67,6 +67,7 @@ app.get("/api/search", async (req, res) => {
     const url =
       `https://api.rawg.io/api/games?key=${apiKey}` +
       `&search=${encodeURIComponent(q)}&page_size=${pageSize}&page=${page}`;
+
     const response = await fetch(url);
     if (!response.ok) throw new Error(`RAWG API error: ${response.status}`);
 
@@ -92,7 +93,7 @@ app.get("/api/search", async (req, res) => {
   }
 });
 
-// --- Categories (RAWG genres) ---
+// --- Categories ---
 app.get("/api/categories", async (_req, res) => {
   const apiKey = process.env.EXTERNAL_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
@@ -105,7 +106,7 @@ app.get("/api/categories", async (_req, res) => {
     const categories = (json.results || []).map((g) => ({
       id: g.id,
       name: g.name,
-      slug: g.slug, // use this slug when filtering (&genres=slug)
+      slug: g.slug,
       games_count: g.games_count ?? null,
     }));
 
@@ -116,12 +117,12 @@ app.get("/api/categories", async (_req, res) => {
   }
 });
 
-// --- Search by Category (genre) ---
+// --- Category Search ---
 app.get("/api/searchByCategory", async (req, res) => {
   const apiKey = process.env.EXTERNAL_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
 
-  const genre = (req.query.genre || "").trim(); // RAWG expects slug(s)
+  const genre = (req.query.genre || "").trim();
   const page = Number(req.query.page || 1);
   const pageSize = Number(req.query.page_size || 24);
   if (!genre) return res.status(400).json({ error: "Missing ?genre=<slug>" });
@@ -132,15 +133,14 @@ app.get("/api/searchByCategory", async (req, res) => {
       `&genres=${encodeURIComponent(genre)}&page=${page}&page_size=${pageSize}&ordering=-added`;
 
     const r = await fetch(url);
-    if (!r.ok) throw new Error(`RAWG category search error: ${r.status}`);
     const json = await r.json();
 
     const results = (json.results || []).map((g) => ({
       id: g.id,
       name: g.name,
-      image: g.background_image || g.background_image_additional || null,
-      rating: g.rating ?? null,
-      released: g.released ?? null,
+      image: g.background_image,
+      rating: g.rating,
+      released: g.released,
     }));
 
     res.json({
@@ -157,7 +157,73 @@ app.get("/api/searchByCategory", async (req, res) => {
   }
 });
 
-// --- Game details ---
+// --- ADVANCED SEARCH (FR1 + FR3) ---
+app.get("/api/advancedSearch", async (req, res) => {
+  const apiKey = process.env.EXTERNAL_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
+
+  const {
+    q = "",
+    genre = "",
+    platform = "",
+    vr = "",
+    minRating = "",
+    releasedFrom = "",
+    releasedTo = "",
+    page = 1,
+    page_size = 24,
+  } = req.query;
+
+  let url =
+    `https://api.rawg.io/api/games?key=${apiKey}&page=${page}&page_size=${page_size}`;
+
+  if (q) url += `&search=${encodeURIComponent(q)}`;
+  if (genre) url += `&genres=${genre}`;
+  if (platform) url += `&platforms=${platform}`;
+  if (minRating) url += `&metacritic=${minRating},100`;
+  if (releasedFrom || releasedTo)
+    url += `&dates=${releasedFrom || "1900-01-01"},${releasedTo || "2050-01-01"}`;
+
+  url += `&ordering=-added`;
+
+  try {
+    const r = await fetch(url);
+    const json = await r.json();
+
+    const results = (json.results || []).map((g) => ({
+      id: g.id,
+      name: g.name,
+      image: g.background_image,
+      rating: g.rating,
+      released: g.released,
+      raw: g,
+    }));
+
+    const final =
+      vr === "yes"
+        ? results.filter((r) => {
+            const name = r.raw.name.toLowerCase();
+            const tags = r.raw.tags?.map((t) => t.name.toLowerCase()) || [];
+            return (
+              name.includes("vr") ||
+              tags.some((t) => t.includes("vr") || t.includes("virtual"))
+            );
+          })
+        : results;
+
+    res.json({
+      results: final,
+      hasNext: Boolean(json.next),
+      hasPrev: Boolean(json.previous),
+      page: Number(page),
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Advanced search failed" });
+  }
+});
+
+// --- Game details & VR detection ---
 app.get("/api/game/:id", async (req, res) => {
   const gameId = req.params.id;
   const apiKey = process.env.EXTERNAL_API_KEY;
@@ -176,76 +242,26 @@ app.get("/api/game/:id", async (req, res) => {
       rating: g.rating || null,
       metacritic: g.metacritic || null,
       website: g.website || null,
-      image:
-        g.background_image ||
-        g.background_image_additional ||
-        (g.background_image && g.background_image) ||
-        null,
-      genres: Array.isArray(g.genres) ? g.genres.map((x) => x.name) : [],
-      platforms: Array.isArray(g.platforms)
-        ? g.platforms.map((p) => p.platform?.name).filter(Boolean)
-        : [],
-      developers: Array.isArray(g.developers) ? g.developers.map((d) => d.name) : [],
-      publishers: Array.isArray(g.publishers) ? g.publishers.map((p) => p.name) : [],
+      image: g.background_image || g.background_image_additional,
+      genres: g.genres?.map((x) => x.name) || [],
+      platforms: g.platforms?.map((p) => p.platform?.name) || [],
+      developers: g.developers?.map((d) => d.name) || [],
+      publishers: g.publishers?.map((p) => p.name) || [],
     };
 
-
-
-    // Detect VR support based on tags, platforms, or name
-    // Detect VR support based on tags, platforms, or name
-    const vrKeywords = [
-      // General
-      "vr", "virtual reality", "mixed reality", "extended reality", "xr", "ar vr", "mr", "headset",
-    
-      // Meta / Oculus ecosystem
-      "oculus", "oculus rift", "oculus rift s", "oculus quest", "oculus quest 2",
-      "meta quest", "meta quest 2", "meta quest 3", "meta quest pro",
-    
-      // HTC / Vive ecosystem
-      "vive", "htc vive", "vive pro", "vive pro 2", "vive cosmos", "vive elite",
-      "vive focus", "vive focus 3", "vive xr elite",
-    
-      // Valve
-      "valve index", "index headset", "index controllers",
-    
-      // Sony / PlayStation VR
-      "playstation vr", "psvr", "psvr2", "playstation vr2",
-    
-      // Microsoft / Windows Mixed Reality
-      "windows mixed reality", "wmr", "hp reverb", "reverb g2", "samsung odyssey", "lenovo explorer",
-      "acer mixed reality", "dell visor", "asus mixed reality",
-    
-      // PICO / ByteDance
-      "pico", "pico neo", "pico neo 3", "pico 4", "pico neo link", "pico neo 4 pro",
-    
-      // Varjo (enterprise-grade)
-      "varjo", "varjo aero", "varjo xr-3", "varjo vr-3",
-    
-      // Apple
-      "apple vision pro", "vision pro",
-    
-      // HP / Lenovo / Others
-      "hp reverb g1", "hp reverb g2", "lenovo mirage", "lenovo explorer",
-    
-      // Other brands & dev kits
-      "starvr", "osvr", "deepoon", "piimax", "pimax", "pimax 4k", "pimax 5k", "pimax 8k",
-      "pimax crystal", "pimax reality", "gear vr", "daydream", "google daydream", "cardboard",
-      "samsung gear vr", "gearvr", "merge vr", "homido", "zeiss vr one", "noon vr", "archos vr",
-      "riftcat", "virtual desktop",
-    
-      // Generic platform/tech identifiers
-      "openxr", "steamvr", "meta platform", "mixed reality headset", "vr support"
-    ];
-    
+    const vrKeywords = ["vr", "virtual reality", "vive", "oculus", "valve index"];
     const vr_supported =
-      g.tags?.some(t => vrKeywords.some(k => t.name?.toLowerCase().includes(k))) ||
-      g.platforms?.some(p => vrKeywords.some(k => p.platform?.name?.toLowerCase().includes(k))) ||
-      vrKeywords.some(k => g.name?.toLowerCase().includes(k)) ||
-      false;
-      
-    // Attach to the response object
+      g.tags?.some((t) =>
+        vrKeywords.some((k) => t.name?.toLowerCase().includes(k))
+      ) ||
+      g.platforms?.some((p) =>
+        vrKeywords.some((k) =>
+          p.platform?.name?.toLowerCase().includes(k)
+        )
+      ) ||
+      vrKeywords.some((k) => g.name.toLowerCase().includes(k));
+
     details.vr_supported = vr_supported ? "Yes" : "No";
-      
 
     res.json(details);
   } catch (error) {
@@ -254,7 +270,7 @@ app.get("/api/game/:id", async (req, res) => {
   }
 });
 
-// --- Comments (in-memory demo) ---
+// --- Comments ---
 app.get("/api/game/:id/comments", (req, res) => {
   const { id } = req.params;
   res.json({ comments: commentsByGame[id] || [] });
