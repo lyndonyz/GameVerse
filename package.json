@@ -21,5 +21,8 @@
   "homepage": "https://github.com/lyndonyz/GameVerse#readme",
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "@ibm-cloud/cloudant": "^0.12.11"
   }
 }
