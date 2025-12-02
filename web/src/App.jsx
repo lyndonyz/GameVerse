@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "./AuthContext.jsx";
 import "./App.css";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const { loggedIn, setLoggedIn } = useAuth();
 
   // --------------------------
   // CATEGORY (GENRE)
@@ -552,6 +554,11 @@ function App() {
 
         <nav className="drawerMenu">
           <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+          {!loggedIn && (
+            <button className="drawerLoginBtn" onClick={() => setLoggedIn(true)}>
+              Log In
+            </button>
+          )}
         </nav>
       </div>
       {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
