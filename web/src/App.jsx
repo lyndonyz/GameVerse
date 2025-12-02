@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import "./App.css";
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
   const [hasPrev, setHasPrev] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // --------------------------
   // CATEGORY (GENRE)
@@ -371,10 +373,10 @@ function App() {
 
       {/* HEADER */}
       <header className="header">
+        <button className="hamburger" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="brand" onClick={goHome} role="button" tabIndex={0}>
           GAMEVERSE
         </div>
-
         <form className="search" onSubmit={onSubmit}>
           
           {/* TEXT SEARCH */}
@@ -544,6 +546,17 @@ function App() {
       </main>
 
       {/* MODAL */}
+      {/* This is for the sidebar so dont touch this*/}
+      <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
+        <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
+
+        <nav className="drawerMenu">
+          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+        </nav>
+      </div>
+      {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
+      {/* Ends here*/}
+
       {selected && (
         <>
           <div className="backdrop" onClick={closeModal} />

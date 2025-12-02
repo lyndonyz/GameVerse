@@ -1,0 +1,13 @@
+:root {
+  --bg: #0a001a;
+  --panel: #14002e;
+  --panel-2: #1b0138;
+  --panel-3: #2c014e;
+  --text: #f0e6ff;
+  --muted: #aa8ccf;
+  --brand: #b400f3;
+  --brand-2: #ff00d4;
+  --border: #3a0059;
+  --chip: #240038;
+  --shadow: 0 8px 24px rgba(191, 0, 255, 0.35);
+}

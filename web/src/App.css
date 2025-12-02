@@ -490,3 +490,84 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.hamburger {
+  font-size: 24px;
+  background: transparent;
+  color: var(--text);
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.hamburger:hover {
+  background: var(--panel-2);
+}
+
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 50;
+}
+
+.leftDrawer {
+  position: fixed;
+  top: 0;
+  left: -260px;      
+  width: 260px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+  border-right: 1px solid var(--border);
+  box-shadow: 6px 0 20px rgba(0,0,0,0.4);
+  z-index: 60;
+  padding: 20px;
+  transition: left 0.25s ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.leftDrawer.open {
+  left: 0;            /* slide in */
+}
+
+/* CLOSE BUTTON */
+.drawerClose {
+  align-self: flex-end;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.drawerClose:hover {
+  background: var(--panel-3);
+}
+
+.drawerMenu {
+  margin-top: 30px;
+  display: grid;
+  gap: 14px;
+}
+
+.drawerMenu a {
+  text-decoration: none;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  transition: 0.2s;
+}
+
+.drawerMenu a:hover {
+  background: #7b00ff33;
+  border-color: var(--brand);
+}
