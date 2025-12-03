@@ -11,7 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
+const handleLogin = async (e) => {
     e.preventDefault();
 
     setError(""); 
@@ -24,7 +24,7 @@ export default function Login() {
       const res = await fetch("http://localhost:8080/auth/login", { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ identifier: username, password }) 
       });
 
       const data = await res.json();
