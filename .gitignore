@@ -1,8 +1,6 @@
 # Node modules anywhere in the project
 node_modules/
 **/node_modules/
-Dockerfile
-.dockerignore
 
 # Logs
 logs
