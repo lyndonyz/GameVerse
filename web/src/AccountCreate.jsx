@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import "./Login.css";
 
 export default function AccountCreate() {
+  const API_BASE_URL = "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
@@ -37,7 +38,8 @@ export default function AccountCreate() {
     }
 
     try {
-    const res = await fetch("http://localhost:8080/auth/register", {
+//   const res = await fetch("http://localhost:8080/auth/register", { 
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

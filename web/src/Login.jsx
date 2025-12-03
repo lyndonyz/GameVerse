@@ -6,7 +6,7 @@ import "./Login.css";
 export default function Login() {
   const navigate = useNavigate();
   const { setLoggedIn, setUser } = useAuth();
-
+  const API_BASE_URL = "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,7 +22,8 @@ export default function Login() {
     }
 
     try {
-      const res = await fetch("http://localhost:8080/auth/login", { 
+    //   const res = await fetch("http://localhost:8080/auth/login", { 
+    const res = await fetch(`${API_BASE_URL}/auth/login`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: username, password }) 
