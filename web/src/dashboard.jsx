@@ -30,10 +30,17 @@ function Dashboard() {
 
         <nav className="drawerMenu">
           <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
-          {!loggedIn && (
-            <button className="drawerLoginBtn" onClick={() => setLoggedIn(true)}>
+          {!loggedIn ? (
+            <Link to="/login" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>
                 Log In
-            </button>
+            </Link>
+            ) : (
+            <div className="drawerUserBlock">
+                <p>Logged in as <b>{user.username}</b></p>
+                <button className="drawerLogoutBtn" onClick={() => { logout(); setMenuOpen(false); }}>
+                Log Out
+                </button>
+            </div>
             )}
         </nav>
       </div>

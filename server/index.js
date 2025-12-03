@@ -1,4 +1,3 @@
-// index.js (FULL UPDATED FILE)
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -6,8 +5,11 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+const authRoutes = require("./routes/auth");
+
 app.use(cors());
 app.use(express.json());
+app.use("/auth", authRoutes);
 
 // --- In-memory comments store ---
 const commentsByGame = Object.create(null);
