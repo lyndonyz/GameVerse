@@ -9,17 +9,19 @@ export default function Login() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    setError(""); 
     if (!username.trim() || !password.trim()) {
-      alert("Please enter both username and password.");
+      setError("Please enter both username and password.");
       return;
     }
 
     try {
-      const res = await fetch("http://localhost:8080/auth/login", {
+      const res = await fetch("http://localhost:8080/auth/login", { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password })
@@ -28,20 +30,16 @@ export default function Login() {
       const data = await res.json();
 
       if (data.error) {
-        alert("Invalid username or password!");
+        setError("Invalid username or password!"); 
         return;
       }
-
-      // Save user globally
       setUser(data.user);
       setLoggedIn(true);
-
-      // Navigate to Dashboard
       navigate("/dashboard");
 
     } catch (err) {
       console.error("Login error:", err);
-      alert("Server error. Make sure backend is running.");
+      setError("Server error. Make sure backend is running.");
     }
   };
 
@@ -71,6 +69,7 @@ export default function Login() {
             Log In
           </button>
         </form>
+        {error && <p className="errorText">{error}</p>}
 
         <p className="loginHint">
           Don't have an account? Create one Here!
