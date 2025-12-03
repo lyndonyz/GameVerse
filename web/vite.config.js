@@ -5,7 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/api": "http://localhost:8080",
+      // "/api": "http://localhost:8080",
+      "/api": "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud",
     },
   },
 });
