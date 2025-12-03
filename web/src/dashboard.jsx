@@ -21,7 +21,18 @@ function Dashboard() {
 
       {/* MAIN CONTENT AREA */}
       <main className="main dashboardMain">
-        <h1>Dashboard</h1>
+        {loggedIn ? (
+          // Logged In: Personalized Dashboard Greeting
+          <h1>Your Dashboard, {user.username}</h1>
+        ) : (
+          // Logged Out: Login Prompt
+          <div className="loginPromptContainer">
+            <h1>Please log in to view your dashboard.</h1>
+            <Link to="/login" className="btn loginPromptBtn">
+              Go to Login
+            </Link>
+          </div>
+        )}
       </main>
 
       {/* LEFT DRAWER SIDEBAR */}
