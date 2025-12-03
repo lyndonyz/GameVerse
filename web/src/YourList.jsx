@@ -3,9 +3,13 @@ import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 import "./App.css";
 
-function Dashboard() {
+function YourList() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { loggedIn, setLoggedIn, user, logout } = useAuth();
+  const { loggedIn, user, logout } = useAuth();
+  const handleDisableClick = (e) => {
+    e.preventDefault();
+    setMenuOpen(false);
+  };
 
   return (
     <div className="layout">
@@ -14,13 +18,14 @@ function Dashboard() {
         <div className="brand" role="button" tabIndex={0}>
           GAMEVERSE
         </div>
+
       </header>
-      <main className="main dashboardMain">
+      <main className="main dashboardMain"> 
         {loggedIn ? (
-          <h1>Your Dashboard, {user.username}</h1>
+          <h1>Your Games List, {user.username}</h1>
         ) : (
           <div className="loginPromptContainer">
-            <h1>Please log in to view your dashboard.</h1>
+            <h1>Please log in to view your games list.</h1>
             <Link to="/login" className="btn loginPromptBtn">
               Go to Login
             </Link>
@@ -30,10 +35,10 @@ function Dashboard() {
         <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
             <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
             <nav className="drawerMenu">
-            <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
-            <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-            <Link to="/yourlist" onClick={() => setMenuOpen(false)}>Your List</Link>
-            <Link to="/settings" onClick={() => setMenuOpen(false)}>Settings</Link>
+                <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+                <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+                <Link to="/yourlist" onClick={() => setMenuOpen(false)}>Your List</Link>
+                <Link to="/settings" onClick={() => setMenuOpen(false)}>Settings</Link>
             </nav>
 
             <div className="drawerAuthFooter"> 
@@ -56,4 +61,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default YourList;
