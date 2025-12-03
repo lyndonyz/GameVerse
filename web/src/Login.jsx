@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 import "./Login.css";
 
@@ -16,7 +16,7 @@ export default function Login() {
 
     setError(""); 
     if (!username.trim() || !password.trim()) {
-      setError("Please enter both username and password.");
+      setError("Please enter your username/email and password.");
       return;
     }
 
@@ -52,7 +52,7 @@ export default function Login() {
           <input
             className="loginInput"
             type="text"
-            placeholder="Enter username..."
+            placeholder="Username, Email"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
@@ -60,7 +60,7 @@ export default function Login() {
           <input
             className="loginInput"
             type="password"
-            placeholder="Enter password..."
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -72,7 +72,7 @@ export default function Login() {
         {error && <p className="errorText">{error}</p>}
 
         <p className="loginHint">
-          Don't have an account? Create one Here!
+          Don't have an account? <Link to="/register">Create one Here!</Link> 
         </p>
       </div>
     </div>
