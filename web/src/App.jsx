@@ -1,3 +1,5 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
