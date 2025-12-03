@@ -57,3 +57,25 @@
     text-align: center;
     font-size: 14px;
 }
+.emailInputGroup {
+    position: relative;
+    width: 100%;
+    margin-bottom: 20px; 
+}
+
+.optional-tag {
+    position: absolute;
+    top: 15px; 
+    right: 15px;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--muted, #999); 
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.8; 
+    transition: opacity 0.2s;
+}
+
+.emailInputGroup:focus-within .optional-tag .emailInputGroup .loginInput:not(:placeholder-shown) + .optional-tag {
+    opacity: 0;
+}

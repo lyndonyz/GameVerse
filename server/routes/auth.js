@@ -3,12 +3,10 @@ const router = express.Router();
 const {
   validateLogin,
   addUser,
-  userExists
+  addUserWithEmail,
 } = require("../userDB");
 
-// -----------------------
-// LOGIN
-// -----------------------
+// Login handler
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -26,18 +24,29 @@ router.post("/login", async (req, res) => {
   });
 });
 
-// -----------------------
-// REGISTER
-// -----------------------
+// Account registration handler
 router.post("/register", async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, email } = req.body;
 
-  const exists = await userExists(username);
-  if (exists) {
-    return res.status(400).json({ error: "USERNAME_TAKEN" });
+  let result;
+  const normalizedEmail = email?.trim();
+
+  if (normalizedEmail) { 
+      result = await addUserWithEmail(username, password, normalizedEmail);
+  } else {
+      result = await addUser(username, password);
   }
 
-  const result = await addUser(username, password);
+  if (result && result.error) {
+    if (result.error === "USERNAME_TAKEN") {
+        return res.status(400).json({ error: "USERNAME_TAKEN" });
+    }
+    if (result.error === "EMAIL_TAKEN") {
+        return res.status(400).json({ error: "EMAIL_TAKEN" }); 
+    }
+    return res.status(500).json({ error: "REGISTRATION_FAILED" }); 
+  }
+
   res.json({ success: true, result });
 });
 

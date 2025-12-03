@@ -30,8 +30,13 @@ function wait(ms) {
 
     // --- Add User with Email ---
     console.log("\n--- Add User with Email ---");
-    const user2 = await addUserWithEmail("testuser", "password123", "test@example.com");
+    const user2 = await addUserWithEmail("testuser69786", "password123", "test@example.com");
     console.log("Added:", user2);
+
+        // --- Add User with Email2 ---
+    console.log("\n--- Add User with Email ---");
+    const user3 = await addUserWithEmail("testuser22222", "password123", "test@example.com");
+    console.log("Added:", user3);
 
     // --- Check if user exists ---
     console.log("\n--- Check if user exists ---");
