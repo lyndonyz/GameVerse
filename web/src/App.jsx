@@ -412,7 +412,10 @@ loading ? (
 <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
 <button className="drawerClose" onClick={()=>setMenuOpen(false)}>✕</button>
 <nav className="drawerMenu">
-<Link to="/dashboard" onClick={()=>setMenuOpen(false)}>Dashboard</Link>
+<Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+<Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+<Link to="/yourlist" onClick={() => setMenuOpen(false)}>Your List</Link>
+<Link to="/settings" onClick={() => setMenuOpen(false)}>Settings</Link>
 </nav>
 <div className="drawerAuthFooter"> 
     {!loggedIn ? (
