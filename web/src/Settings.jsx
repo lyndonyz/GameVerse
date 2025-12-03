@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 import "./App.css";
-import "./settings.css"; 
+import "./Settings.css"; 
 
 function SettingBox({ title, children }) {
     return (
