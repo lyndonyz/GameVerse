@@ -9,6 +9,7 @@ export default function AccountCreate() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -67,56 +68,77 @@ export default function AccountCreate() {
   };
 
   return (
-    <div className="loginContainer">
-      <div className="loginBox">
-        <h1>Create Account</h1>
+    <div className="layout"> 
+      <header className="header">
+        <button className="hamburger" onClick={() => setMenuOpen(true)}>☰</button>
+        <div className="brand" role="button" tabIndex={0}>
+          GAMEVERSE
+        </div>
+      </header>
+      <div className="loginContainer">
+        <div className="loginBox">
+          <h1>Create Account</h1>
 
-        <p className="loginHint" style={{ marginBottom: '5px', fontSize: '0.9em', color: 'var(--muted)' }}>
-            Username must be unique and between 3-18 characters.
-        </p>
-        <form onSubmit={handleRegister}>
-          <input
-            className="loginInput"
-            type="text"
-            placeholder="Choose a username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <div className="emailInputGroup">
-            <span className="optional-tag">
-              (Optional)
-            </span>
+          <p className="loginHint" style={{ marginBottom: '5px', fontSize: '0.9em', color: 'var(--muted)' }}>
+              Username must be unique and between 3-18 characters.
+          </p>
+          <form onSubmit={handleRegister}>
             <input
               className="loginInput"
-              type="email"
-              placeholder="Enter email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              placeholder="Choose a username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
-          </div>
-          
-          <p className="loginHint" style={{ marginBottom: '5px', fontSize: '0.9em', color: 'var(--muted)' }}>
-            Password must be between 6-18 characters.
+            <div className="emailInputGroup">
+              <span className="optional-tag">
+                (Optional)
+              </span>
+              <input
+                className="loginInput"
+                type="email"
+                placeholder="Enter email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            
+            <p className="loginHint" style={{ marginBottom: '5px', fontSize: '0.9em', color: 'var(--muted)' }}>
+              Password must be between 6-18 characters.
+            </p>
+
+            <input
+              className="loginInput"
+              type="password"
+              placeholder="Choose a password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ marginTop: '0px' }} 
+            />
+
+            <button className="loginBtn" type="submit">
+              Register
+            </button>
+          </form>
+          {error && <p className="errorText">{error}</p>}
+          <p className="loginHint">
+            Already have an account? <Link to="/login">Log in here!</Link>
           </p>
-
-          <input
-            className="loginInput"
-            type="password"
-            placeholder="Choose a password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{ marginTop: '0px' }} 
-          />
-
-          <button className="loginBtn" type="submit">
-            Register
-          </button>
-        </form>
-        {error && <p className="errorText">{error}</p>}
-        <p className="loginHint">
-          Already have an account? <Link to="/login">Log in here!</Link>
-        </p>
+        </div>
       </div>
+      <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
+        <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
+        <nav className="drawerMenu">
+          <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+        </nav>
+        <div className="drawerAuthFooter"> 
+          <Link to="/login" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>
+              Log In
+          </Link>
+        </div>
+      </div>
+      {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
     </div>
   );
 }

@@ -9,23 +9,16 @@ function Dashboard() {
 
   return (
     <div className="layout">
-
-      {/* HEADER */}
       <header className="header">
         <button className="hamburger" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="brand" role="button" tabIndex={0}>
           GAMEVERSE
         </div>
-
       </header>
-
-      {/* MAIN CONTENT AREA */}
       <main className="main dashboardMain">
         {loggedIn ? (
-          // Logged In: Personalized Dashboard Greeting
           <h1>Your Dashboard, {user.username}</h1>
         ) : (
-          // Logged Out: Login Prompt
           <div className="loginPromptContainer">
             <h1>Please log in to view your dashboard.</h1>
             <Link to="/login" className="btn loginPromptBtn">
@@ -34,8 +27,6 @@ function Dashboard() {
           </div>
         )}
       </main>
-
-      {/* LEFT DRAWER SIDEBAR */}
         <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
             <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
             <nav className="drawerMenu">
@@ -57,8 +48,6 @@ function Dashboard() {
             )}
             </div>
         </div>
-
-      {/* OVERLAY */}
       {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
     </div>
   );
