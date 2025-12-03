@@ -44,7 +44,8 @@ function Dashboard() {
                         color: 'var(--muted)', 
                         marginBottom: '10px' 
                     }}>
-                        {formattedDate}  
+                        {formattedDate}
+                        <br></br>  
                         <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}> {formattedTime}</span>
                     </p>
                     <p className="selectedDate">
