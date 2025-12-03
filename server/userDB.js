@@ -296,6 +296,35 @@ async function updateUsername(oldUsername, newUsername) {
 }
 
 // ------------------
+// Add list
+// ------------------
+async function addToList(_gameToAdd, _listNum) {
+    try {
+        const user = await getUserByUsername(oldUsername);
+        if (!user) {
+            console.error(`User "${oldUsername}" not found`);
+            return null;
+        }
+
+        const updatedDoc = { ...user, username: newUsername };
+
+        const response = await retrySystemInstance.execute(() =>
+            client.putDocument({
+                db: USERS_DB,
+                docId: user._id,
+                document: updatedDoc
+            })
+        );
+
+        console.log(`Updated username from "${oldUsername}" to "${newUsername}"`);
+        return response.result;
+    } catch (err) {
+        console.error(`Error updating username for "${oldUsername}":`, err);
+        return null;
+    }
+}
+
+// ------------------
 // Update Password
 // ------------------
 async function updatePassword(username, newPassword) {
@@ -325,6 +354,124 @@ async function updatePassword(username, newPassword) {
 }
 
 
+// ------------------
+// Remove a game
+// ------------------
+async function removeGameFromList(username, gameName) {
+    const user = await getUserByUsername(username);
+    if (!user) {
+            console.error(`User "${username}" not found`);
+            return null;
+        }
+
+    user.list = user.list || [];
+
+    const origLength = user.list.length;
+    user.list = user.list.filter(entry => entry.game !== gameName);
+
+    if (user.list.length === origLength) {
+        return { error: "GAME_NOT_FOUND" };
+    }
+
+    const result = await retrySystemInstance.execute(() =>
+        client.putDocument({
+            db: USERS_DB,
+            docId: user._id,
+            document: user
+        })
+    );
+    return result.result;
+}
+
+
+// ------------------
+// Add a game to the user's list
+// ------------------
+async function addGameToList(username, gameName, status = 0) {
+    const user = await getUserByUsername(username);
+    if (!user) {
+            console.error(`User "${username}" not found`);
+            return null;
+        }
+    user.list = user.list || [];
+    if (user.list.some(entry => entry.game === gameName)) {
+        return { error: "GAME_ALREADY_EXISTS" };
+    }
+    user.list.push({ game: gameName, status: status });
+
+    const result = await retrySystemInstance.execute(() =>
+        client.putDocument({
+            db: USERS_DB,
+            docId: user._id,
+            document: user
+        })
+    );
+
+    return result.result;
+}
+
+// ------------------
+// Update game status
+// ------------------
+async function updateGameStatus(username, gameName, newStatus) {
+    const user = await getUserByUsername(username);
+    if (!user) {
+            console.error(`User "${username}" not found`);
+            return null;
+        }
+
+    user.list = user.list || [];
+    const game = user.list.find(entry => entry.game === gameName);
+    if (!game) {
+        console.error(`Game "${game}" not found`);
+        return null;
+    }
+    game.status = newStatus;
+    const result = await retrySystemInstance.execute(() =>
+        client.putDocument({
+            db: USERS_DB,
+            docId: user._id,
+            document: user
+        })
+    );
+
+    return result.result;
+}
+
+// ------------------
+// Check if game is in list (true/false)
+// ------------------
+async function gameInList(username, gameName) {
+    const user = await getUserByUsername(username);
+    if (!user) return false;
+
+    user.list = user.list || [];
+    return user.list.some(entry => entry.game === gameName);
+}
+
+async function getAllGames(username) {
+    const user = await getUserByUsername(username);
+    if (!user) {
+            console.error(`User "${username}" not found`);
+            return null;
+        }
+
+    user.list = user.list || [];
+    return user.list;
+}
+
+async function getGamesByStatus(username, status) {
+    const user = await getUserByUsername(username);
+    if (!user) {
+      console.error(`User "${username}" not found`);
+      return null;
+    }
+
+    user.list = user.list || [];
+
+    return user.list.filter(entry => entry.status === status);
+}
+
 module.exports = {
   getUserId,
   getUsernameById,
@@ -340,5 +487,11 @@ module.exports = {
   updateUsername,
   updateEmail,
   updatePassword,
+  addGameToList,
+  updateGameStatus,
+  removeGameFromList,
+  gameInList,
+  getAllGames,
+  getGamesByStatus
 };
 
