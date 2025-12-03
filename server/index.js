@@ -6,6 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 const authRoutes = require("./routes/auth");
+const { retryFetch } = require("./retryFetch");
 
 app.use(cors());
 app.use(express.json());
@@ -23,17 +24,15 @@ app.get("/api/discover", async (req, res) => {
   if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
 
   const pageSize = Number(req.query.page_size || 24);
-  const page = Number(req.query.page || 1);
+  const page = Number(req.query.page || 1); 
 
   try {
     const url =
       `https://api.rawg.io/api/games?key=${apiKey}` +
       `&ordering=-added&page=${page}&page_size=${pageSize}`;
 
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`RAWG API error: ${response.status}`);
+    const json = await retryFetch(url);
 
-    const json = await response.json();
     const results = (json.results || []).map((g) => ({
       id: g.id,
       name: g.name,
@@ -70,10 +69,7 @@ app.get("/api/search", async (req, res) => {
       `https://api.rawg.io/api/games?key=${apiKey}` +
       `&search=${encodeURIComponent(q)}&page_size=${pageSize}&page=${page}`;
 
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`RAWG API error: ${response.status}`);
-
-    const json = await response.json();
+    const json = await retryFetch(url);
     const results = (json.results || []).map((g) => ({
       id: g.id,
       name: g.name,
@@ -101,9 +97,8 @@ app.get("/api/categories", async (_req, res) => {
   if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
 
   try {
-    const r = await fetch(`https://api.rawg.io/api/genres?key=${apiKey}`);
-    if (!r.ok) throw new Error(`RAWG genres error: ${r.status}`);
-    const json = await r.json();
+    const json = await retryFetch(`https://api.rawg.io/api/genres?key=${apiKey}`);
+
 
     const categories = (json.results || []).map((g) => ({
       id: g.id,
@@ -134,8 +129,7 @@ app.get("/api/searchByCategory", async (req, res) => {
       `https://api.rawg.io/api/games?key=${apiKey}` +
       `&genres=${encodeURIComponent(genre)}&page=${page}&page_size=${pageSize}&ordering=-added`;
 
-    const r = await fetch(url);
-    const json = await r.json();
+    const json = await retryFetch(url);
 
     const results = (json.results || []).map((g) => ({
       id: g.id,
@@ -189,8 +183,7 @@ app.get("/api/advancedSearch", async (req, res) => {
   url += `&ordering=-added`;
 
   try {
-    const r = await fetch(url);
-    const json = await r.json();
+    const json = await retryFetch(url);
 
     const results = (json.results || []).map((g) => ({
       id: g.id,
@@ -232,9 +225,7 @@ app.get("/api/game/:id", async (req, res) => {
   if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
 
   try {
-    const response = await fetch(`https://api.rawg.io/api/games/${gameId}?key=${apiKey}`);
-    if (!response.ok) throw new Error(`RAWG API error: ${response.status}`);
-    const g = await response.json();
+    const g = await retryFetch(`https://api.rawg.io/api/games/${gameId}?key=${apiKey}`);
 
     const details = {
       id: g.id,
