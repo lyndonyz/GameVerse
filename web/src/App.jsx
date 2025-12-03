@@ -7,6 +7,7 @@ function App() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [results, setResults] = useState([]);
+  const [gameStatus, setGameStatus] = useState(0);
   const [hasNext, setHasNext] = useState(false);
   const [hasPrev, setHasPrev] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -316,6 +317,60 @@ function App() {
     loadDiscover({ page: 1 });
   };
 
+  async function handleAddToList(game) {
+  if (!loggedIn || !user) {
+    alert("Please log in to save games.");
+    return;
+  }
+
+  try {
+    const r = await fetch("http://localhost:8080/auth/addGameToList", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: user.username,
+        gameName: game.name,
+        image: game.background_image || "",
+        slug: game.slug,
+        status: 0
+      })
+    });
+
+    const data = await r.json();
+
+    if (data.error === "GAME_ALREADY_EXISTS") {
+      alert("This game is already in your list.");
+      return;
+    }
+
+    alert(`Added ${game.name} to your list!`);
+  } catch (err) {
+    console.error("ADD GAME ERROR:", err);
+  }
+}
+function handleAddFromModal() {
+  if (!selected) return;
+  handleAddToList(selected);
+}
+async function handleStatusChange(gameName, newStatus) {
+  try {
+    await fetch("http://localhost:8080/auth/updateGameStatus", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: user.username,
+        gameName,
+        newStatus: Number(newStatus)
+      })
+    });
+
+    setGameStatus(Number(newStatus));
+  } catch (err) {
+    console.error("STATUS UPDATE ERROR:", err);
+  }
+}
+
+
   const headerTitle = cat ? (
     <>
       Category: <strong>{cat}</strong> — Page {page}
@@ -515,6 +570,16 @@ function App() {
                 ) : (
                   <li key={g.id} className="row">
                     <div className="rank">{(page - 1) * 24 + idx + 1}</div>
+                    <div className="addBtnWrapper">
+    <button
+      className="addBtn"
+      onClick={() => handleAddToList(g)}
+      title="Add to your list"
+    >
+      +
+    </button>
+  </div>
+
                     <div
                       className="cover"
                       onClick={() => openGame(g)}
@@ -524,8 +589,25 @@ function App() {
                       {g.image ? (
                         <img src={g.image} alt={g.name} />
                       ) : (
+                        
                         <div className="placeholder">No Image</div>
                       )}
+                      {loggedIn && (
+  <div className="status-control">
+    <label>Status: </label>
+    <select
+      value={gameStatus}
+  onClick={(e) => e.stopPropagation()} 
+  onChange={(e) => handleStatusChange(selected.name, e.target.value)} 
+>
+      <option value="0">Plan to Play</option>
+      <option value="1">Playing</option>
+      <option value="2">Completed</option>
+      <option value="3">Dropped</option>
+    </select>
+  </div>
+)}
+
                     </div>
                     <div className="meta">
                       <div
@@ -606,7 +688,7 @@ function App() {
           ) : (
             <div className="drawerUserBlock">
               <p>
-                Logged in as <b>{user.username}</b>
+                Logged in as <b>{user?.username}</b>
               </p>
               <button
                 className="drawerLogoutBtn"
@@ -638,6 +720,13 @@ function App() {
             <button className="closeX" onClick={closeModal}>
               ✕
             </button>
+            <button
+  className="addDetailBtn"
+  onClick={handleAddFromModal}
+  title="Add to your list"
+>
+  +
+</button>
 
             <div className="modalHeader">
               {details?.image && (

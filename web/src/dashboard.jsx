@@ -36,7 +36,7 @@ function Dashboard() {
       <main className="main dashboardMain">
         {loggedIn ? (
           <>
-            <h1>Your Dashboard, {user.username}</h1>
+            <h1>Your Dashboard, {user?.username}</h1>
             <div className="dashboard-grid-header">
                 <div className="timeDateColumn">
                     <p style={{ 
@@ -87,7 +87,7 @@ function Dashboard() {
                 </Link>
             ) : (
                 <div className="drawerUserBlock">
-                    <p>Logged in as <b>{user.username}</b></p>
+                    <p>Logged in as <b>{user?.username}</b></p>
                     <button className="drawerLogoutBtn" onClick={() => { logout(); setMenuOpen(false); }}>
                     Log Out
                     </button>

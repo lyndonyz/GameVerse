@@ -26,7 +26,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  overflow: hidden;
+  
 }
 
 /* LAYOUT */
@@ -673,4 +673,69 @@ body {
   background: var(--brand);
   color: black;
 }
+
+.row {
+  position: relative;
+}
+
+.addBtnWrapper {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+}
+
+.addBtn {
+    background: #ff00ff;
+  border: none;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.addBtn:hover {
+  background: #ff55ff;
+}
+
+.status-control {
+  margin-top: 12px;
+  font-size: 14px;
+}
+.status-control select {
+  padding: 6px;
+  border-radius: 6px;
+  background: #1f1f1f;
+  color: white;
+}
+
+.addDetailBtn {
+  position: absolute;
+  top: 20px;
+  right: 70px;
+  background: #ff00ff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  z-index: 10;
+}
+
+.addDetailBtn:hover {
+  background: #ff33ff;
+  transform: scale(1.1);
+}
+
+
 

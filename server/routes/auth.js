@@ -143,4 +143,81 @@ router.post("/update/password", async (req, res) => {
     res.json({ success: true });
 });
 
+// --------------------------
+// USER GAME LIST ENDPOINTS
+// --------------------------
+const {
+  addGameToList,
+  updateGameStatus,
+  gameInList,
+  getAllGames
+} = require("../db/userDB");
+
+// Add a game with default status (plan_to_play)
+router.post("/addGameToList", async (req, res) => {
+  const { username, gameName, status } = req.body;
+
+  if (!username || !gameName) {
+    return res.status(400).json({ error: "MISSING_FIELDS" });
+  }
+
+  // Check if game already exists
+  const exists = await gameInList(username, gameName);
+  if (exists) {
+    return res.json({ error: "GAME_ALREADY_EXISTS" });
+  }
+
+  const result = await addGameToList(username, gameName, status ?? 0);
+
+  if (result && result.error) {
+    return res.status(500).json({ error: "ADD_FAILED" });
+  }
+
+  res.json({ success: true });
+});
+
+// Update game status
+router.post("/updateGameStatus", async (req, res) => {
+  const { username, gameName, newStatus } = req.body;
+
+  if (!username || !gameName) {
+    return res.status(400).json({ error: "MISSING_FIELDS" });
+  }
+
+  const result = await updateGameStatus(username, gameName, newStatus);
+
+  if (result && result.error) {
+    return res.status(500).json({ error: "UPDATE_FAILED" });
+  }
+
+  res.json({ success: true });
+});
+
+// Get status of a single game
+router.post("/getGameStatus", async (req, res) => {
+  const { username, gameName } = req.body;
+
+  const games = await getAllGames(username);
+  const entry = games.find((g) => g.gameName === gameName);
+
+  if (!entry) {
+    return res.json({ exists: false });
+  }
+
+  res.json({ exists: true, status: entry.status });
+});
+
+// Get all games in user's list
+router.post("/getAllGames", async (req, res) => {
+  const { username } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ error: "MISSING_USERNAME" });
+  }
+
+  const list = await getAllGames(username);
+  res.json({ success: true, list });
+});
+
+
 module.exports = router;
