@@ -1,211 +1,327 @@
 const { client, USERS_DB } = require("./db");
+const { RetrySystem } = require("./retrySystem");
 
-
+// ------------------
+// Setup RetrySystem
+// ------------------
+const retrySystemInstance = new RetrySystem({
+    retry: {
+        maxRetries: 5,      
+        minimumDelay: 300,  
+        maxDelay: 3000  
+    },
+});
 // ------------------
 // username -> Id
 // ------------------
-async function getUserId(username) {
-  const user = await getUserByUsername(username);
-  if (!user) return null;
-  return user._id;
+async function getUserId(username) { 
+    const user = await getUserByUsername(username)
+    return user?._id || null;
 }
+
 
 // ------------------
 // id -> Username
 // ------------------
 async function getUsernameById(id) {
-  const user = await getUserById(id); 
-  if (!user) return null;
-  return user.username; 
+    const user = await getUserById(id);
+    return user?.username || null;
 }
+
+
 
 // ------------------
 // Add a user
 // ------------------
 async function addUser(_username, _password) {
-  try {
-    const existing = await client.postFind({
-      db: USERS_DB,
-      selector: { username: _username },
-      limit: 1
-    });
+    try {
+        const existing = await retrySystemInstance.execute(() =>
+            client.postFind({
+                db: USERS_DB,
+                selector: { username: _username },
+                limit: 1
+            })
+        );
 
-    if (existing.result.docs.length > 0) {
-      return { error: "USERNAME_TAKEN" };
+        if (existing.result.docs.length > 0) {
+            return { error: "USERNAME_TAKEN" };
+        }
+
+        const newUser = { username: _username, password: _password };
+
+        const res = await retrySystemInstance.execute(() =>
+            client.postDocument({
+                db: USERS_DB,
+                document: newUser
+            })
+        );
+
+        return res.result;
+
+    } catch (err) {
+        console.error("addUser error:", err);
+        return null;
     }
+}
 
-    const newUser = {
-      username: _username,
-      password: _password
-    };
 
-    const res = await client.postDocument({
-      db: USERS_DB,
-      document: newUser
-    });
+// ------------------
+// Add a user with email
+// ------------------
+async function addUserWithEmail(_username, _password, _email) {
+    try {
+        const existingName = await retrySystemInstance.execute(() =>
+            client.postFind({
+                db: USERS_DB,
+                selector: { username: _username },
+                limit: 1
+            })
+        );
 
-    return res.result;
-  } catch (err) {
-    console.error("addUser error:", err);
-    return null;
-  }
+        if (existingName.result.docs.length > 0) {
+            return { error: "USERNAME_TAKEN" };
+        }
+
+         const existingEmail = await retrySystemInstance.execute(() =>
+            client.postFind({
+                db: USERS_DB,
+                selector: { email: _email },
+                limit: 1
+            })
+        );
+
+        if (existingEmail.result.docs.length > 0) {
+            return { error: "EMAIL_TAKEN" };
+        }
+
+
+        const newUser = { username: _username, password: _password , email: _email};
+
+        const res = await retrySystemInstance.execute(() =>
+            client.postDocument({
+                db: USERS_DB,
+                document: newUser
+            })
+        );
+
+        return res.result;
+
+    } catch (err) {
+        console.error("addUserWithEmail error:", err);
+        return null;
+    }
 }
 
 // ------------------
 // Get a user by id
 // ------------------
 async function getUserById(id) {
-  try {
-    const response = await client.getDocument({ db: USERS_DB, docId: id });
-    return response.result;
-  } catch (err) {
-    console.error("getUser error:", err);
-  }
+    const response = await retrySystemInstance.execute(() =>
+        client.postFind({
+            db: USERS_DB,
+            selector: { _id: id },
+            limit: 1
+        })
+    );
+
+    return response.result.docs[0] || null;
 }
+
+// ------------------
+// Get Email
+// ------------------
+async function getEmail(username) {
+    const user = await getUserByUsername(username);
+    return user?.email || null;
+}
+
+
 
 // ------------------
 // Get a user by username
 // ------------------
 async function getUserByUsername(_username) {
-  try {
-    const response = await client.postFind({
-        db: USERS_DB,
-        selector: {
-            username: _username,
-        },
-        limit: 1
-    });
-    return response.result.docs[0] || null;
-  } catch (err) {
-    console.error("getUserByUsername error:", err);
-    return null;
-  }
+        const response = await retrySystemInstance.execute(() =>
+            client.postFind({
+                db: USERS_DB,
+                selector: { username: _username },
+                limit: 1
+            })
+        );
+        return response.result.docs[0] || null;
 }
-
 
 // ------------------
 // Check if user exists (true/false)
 // ------------------
-async function userExists(username) { 
-    const u = await getUserByUsername(username); 
-    return !!u; 
+async function userExists(username) {
+    const u = await getUserByUsername(username);
+    return !!u;
 }
 
 // ------------------
 // Validate Login (userinfo/null)
 // ------------------
 async function validateLogin(username, password) {
-  const user = await getUserByUsername(username);
-  if (!user) return null;
-  if (user.password === password) return user;
-  return null;
+    const user = await getUserByUsername(username);
+    if (!user) return null;
+    return user.password === password ? user : null;
 }
-
-
-
 
 // ------------------
 // Remove a document
 // ------------------
 async function deleteUser(username) {
-  try {
-    const user = await getUserByUsername(username);
-    if (!user) {
-      console.error(`User "${username}" not found`);
-      return null;
+    try {
+        const user = await getUserByUsername(username);
+        if (!user) {
+            console.error(`User "${username}" not found`);
+            return null;
+        }
+
+        
+        const response = await retrySystemInstance.execute(() =>
+            client.deleteDocument({
+                db: USERS_DB,
+                docId: user._id,
+                rev: user._rev
+            })
+        );
+
+        console.log(`User "${username}" deleted successfully`);
+        return response.result;
+    } catch (err) {
+        console.error(`Error deleting user "${username}":`, err);
+        return null;
     }
-
-    const response = await client.deleteDocument({
-      db: USERS_DB,
-      docId: user._id,
-      rev: user._rev
-    });
-
-    console.log(`User "${username}" successfully`);
-    return response.result;
-  } catch (err) {
-    console.error(`Error deleting user "${username}":`, err);
-    return null;
-  }
 }
-
 
 // ------------------
 // List documents
 // ------------------
 async function listUsers(limit = 99) {
-  try {
-
-    const users = await client.postAllDocs({
-      db: USERS_DB,
-      includeDocs: true,
-      limit
-    });
-
-    console.log(`Users:`);
-    console.log(users.result.rows);
-  } catch (err) {
-    console.error(`Error accessing database "${USERS_DB}":`, err);
-  }
+    try {
+        const users = await retrySystemInstance.execute(() =>
+            client.postAllDocs({
+                db: USERS_DB,
+                includeDocs: true,
+                limit
+            })
+        );
+        console.log(`Users:`);
+        console.log(users.result.rows);
+    } catch (err) {
+        console.error(`Error accessing database "${USERS_DB}":`, err);
+    }
 }
+
+// ------------------
+// Update Email
+// ------------------
+async function updateEmail(username, newEmail) {
+    try {
+        const user = await getUserByUsername(username);
+        if (!user) {
+            console.error(`User "${username}" not found`);
+            return null;
+        }
+
+        const currentEmail = user.email || null;
+
+        if (currentEmail === newEmail) {
+            console.log(`Email for "${username}" already set to "${newEmail}"`);
+            return user;
+        }
+
+        const emailLookup = await retrySystemInstance.execute(() =>
+            client.postFind({
+                db: USERS_DB,
+                selector: { email: newEmail },
+                limit: 1
+            })
+        );
+
+        if (emailLookup.result.docs.length > 0) {
+            console.error(`Email "${newEmail}" is already taken`);
+            return { error: "EMAIL_TAKEN" };
+        }
+
+        const updatedDoc = { ...user, email: newEmail };
+
+        const response = await retrySystemInstance.execute(() =>
+            client.putDocument({
+                db: USERS_DB,
+                docId: user._id,
+                document: updatedDoc
+            })
+        );
+
+        console.log(`Updated email for "${username}" to "${newEmail}"`);
+        return response.result;
+
+    } catch (err) {
+        console.error(`Error updating email for "${username}":`, err);
+        return null;
+    }
+}
+
 
 // ------------------
 // Update Username
 // ------------------
 async function updateUsername(oldUsername, newUsername) {
-  try {
-    const user = await getUserByUsername(oldUsername);
-    if (!user) {
-      console.error(`User "${oldUsername}" not found`);
-      return null;
+    try {
+        const user = await getUserByUsername(oldUsername);
+        if (!user) {
+            console.error(`User "${oldUsername}" not found`);
+            return null;
+        }
+
+        const updatedDoc = { ...user, username: newUsername };
+
+        const response = await retrySystemInstance.execute(() =>
+            client.putDocument({
+                db: USERS_DB,
+                docId: user._id,
+                document: updatedDoc
+            })
+        );
+
+        console.log(`Updated username from "${oldUsername}" to "${newUsername}"`);
+        return response.result;
+    } catch (err) {
+        console.error(`Error updating username for "${oldUsername}":`, err);
+        return null;
     }
-
-    const updatedDoc = {
-      ...user,           // include all existing fields
-      username: newUsername 
-    };
-
-    const response = await client.putDocument({
-      db: USERS_DB,
-      docId: user._id,
-      document: updatedDoc
-    });
-
-    console.log(`Updated username from "${oldUsername}" to "${newUsername}"`);
-    return response.result;
-  } catch (err) {
-    console.error(`Error updating username for "${oldUsername}":`, err);
-    return null;
-  }
 }
+
 // ------------------
 // Update Password
 // ------------------
 async function updatePassword(username, newPassword) {
-  try {
-    const user = await getUserByUsername(username);
-    if (!user) {
-      console.error(`User "${username}" not found`);
-      return null;
+    try {
+        const user = await getUserByUsername(username);
+        if (!user) {
+            console.error(`User "${username}" not found`);
+            return null;
+        }
+
+        const updatedDoc = { ...user, password: newPassword };
+
+         const response = await retrySystemInstance.execute(() =>
+            client.putDocument({
+                db: USERS_DB,
+                docId: user._id,
+                document: updatedDoc
+            })
+        );
+
+        console.log(`Updated password for "${username}"`);
+        return response.result;
+    } catch (err) {
+        console.error(`Error updating password for "${username}":`, err);
+        return null;
     }
-
-    const updatedDoc = {
-      ...user,           // include all existing fields
-      password: newPassword 
-    };
-
-    const response = await client.putDocument({
-      db: USERS_DB,
-      docId: user._id,
-      document: updatedDoc
-    });
-
-    console.log(`Updated "${username}"'s password"`);
-    return response.result;
-  } catch (err) {
-    console.error(`Error updating password for "${username}":`, err);
-    return null;
-  }
 }
 
 
@@ -213,12 +329,16 @@ module.exports = {
   getUserId,
   getUsernameById,
   addUser,
+  addUserWithEmail,
   getUserById,
   getUserByUsername,
+  getEmail,
   userExists,
   validateLogin,
   deleteUser,
   listUsers,
   updateUsername,
+  updateEmail,
   updatePassword,
 };
+
