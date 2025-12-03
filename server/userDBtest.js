@@ -34,6 +34,7 @@ function wait(ms) {
   const user1 = await addUser("testuser", "password123");
   console.log("Added:", user1);
 
+
   // --- Add User with Email ---
   console.log("\n--- Add User with Email ---");
   const user2 = await addUserWithEmail("testuser", "password123", "test@example.com");
@@ -115,7 +116,7 @@ function wait(ms) {
 
   // --- Remove a game ---
   console.log("\n--- Remove Game From List ---");
-  console.log(await removeGameFromList("testuser2", "s"));
+  console.log(await removeGameFromList("testuser2", "OneShot"));
 
   // --- Confirm List After Remove ---
   console.log("\n--- All Games After Removal ---");

@@ -38,7 +38,7 @@ async function addUser(_username, _password) {
         const existing = await retrySystemInstance.execute(() =>
             client.postFind({
                 db: USERS_DB,
-                selector: { username: _username },
+                selector: { username: { $regex: `(?i)^${_username}$` } },
                 limit: 1
             })
         );
@@ -73,7 +73,7 @@ async function addUserWithEmail(_username, _password, _email) {
         const existingName = await retrySystemInstance.execute(() =>
             client.postFind({
                 db: USERS_DB,
-                selector: { username: _username },
+                selector: { username: { $regex: `(?i)^${_username}$` } },
                 limit: 1
             })
         );
@@ -85,7 +85,7 @@ async function addUserWithEmail(_username, _password, _email) {
          const existingEmail = await retrySystemInstance.execute(() =>
             client.postFind({
                 db: USERS_DB,
-                selector: { email: _email },
+                selector: { email: { $regex: `(?i)^${_email}$` } },
                 limit: 1
             })
         );
@@ -144,7 +144,7 @@ async function getUserByUsername(_username) {
         const response = await retrySystemInstance.execute(() =>
             client.postFind({
                 db: USERS_DB,
-                selector: { username: _username },
+                selector: { username: { $regex: `(?i)^${_username}$` } },
                 limit: 1
             })
         );
@@ -236,7 +236,7 @@ async function updateEmail(username, newEmail) {
         const emailLookup = await retrySystemInstance.execute(() =>
             client.postFind({
                 db: USERS_DB,
-                selector: { email: newEmail },
+                selector: { email: { $regex: `(?i)^${newEmail}$` } },
                 limit: 1
             })
         );
@@ -380,6 +380,7 @@ async function removeGameFromList(username, gameName) {
             document: user
         })
     );
+
     return result.result;
 }
 
@@ -397,7 +398,7 @@ async function addGameToList(username, gameName, status = 0) {
     if (user.list.some(entry => entry.game === gameName)) {
         return { error: "GAME_ALREADY_EXISTS" };
     }
-    user.list.push({ game: gameName, status: status });
+    user.list.push({ game: gameName, status });
 
     const result = await retrySystemInstance.execute(() =>
         client.putDocument({
