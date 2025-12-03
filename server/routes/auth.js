@@ -56,9 +56,7 @@ router.post("/register", async (req, res) => {
   res.json({ success: true, result });
 });
 
-// -----------------------
-// UPDATE USERNAME
-// -----------------------
+// Username update handler
 router.post("/update/username", async (req, res) => {
     const { userId, newUsername } = req.body;
 
@@ -66,18 +64,15 @@ router.post("/update/username", async (req, res) => {
         return res.status(400).json({ error: "Missing fields" });
     }
 
-    // 1. Check if the new username is already taken
     if (await userExists(newUsername)) {
          return res.status(400).json({ error: "USERNAME_TAKEN" });
     }
 
-    // 2. Get the current username using the ID
     const currentUsername = await getUsernameById(userId);
     if (!currentUsername) {
         return res.status(404).json({ error: "USER_NOT_FOUND" });
     }
 
-    // 3. Perform the update
     const result = await updateUsername(currentUsername, newUsername);
 
     if (result && result.error) {
@@ -90,9 +85,7 @@ router.post("/update/username", async (req, res) => {
     res.json({ success: true, newUsername });
 });
 
-// -----------------------
-// UPDATE EMAIL
-// -----------------------
+// Email update handler
 router.post("/update/email", async (req, res) => {
     const { userId, newEmail } = req.body;
 
@@ -100,13 +93,11 @@ router.post("/update/email", async (req, res) => {
         return res.status(400).json({ error: "Missing fields" });
     }
 
-    // 1. Get the current username using the ID
     const currentUsername = await getUsernameById(userId);
     if (!currentUsername) {
         return res.status(404).json({ error: "USER_NOT_FOUND" });
     }
 
-    // 2. Perform the update (updateEmail already checks for EMAIL_TAKEN)
     const result = await updateEmail(currentUsername, newEmail);
 
     if (result && result.error) {
@@ -122,9 +113,7 @@ router.post("/update/email", async (req, res) => {
     res.json({ success: true, newEmail });
 });
 
-// -----------------------
-// UPDATE PASSWORD
-// -----------------------
+// Password update handler
 router.post("/update/password", async (req, res) => {
     const { userId, currentPassword, newPassword } = req.body;
 
