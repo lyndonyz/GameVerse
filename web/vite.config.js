@@ -4,12 +4,9 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [
     react({
-      jsxRuntime: 'classic', 
+      jsxRuntime: 'automatic', 
     }),
   ],
-  esbuild: {
-    jsxInject: `import React from 'react'`,
-  },
   server: {
     proxy: {
       // "/api": "http://localhost:8080",
