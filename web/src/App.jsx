@@ -12,7 +12,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  const { loggedIn, setLoggedIn } = useAuth();
+  const { loggedIn, setLoggedIn, user, logout } = useAuth();
 
   const [categories, setCategories] = useState([]);
   const [cat, setCat] = useState("");
@@ -413,8 +413,21 @@ loading ? (
 <button className="drawerClose" onClick={()=>setMenuOpen(false)}>✕</button>
 <nav className="drawerMenu">
 <Link to="/dashboard" onClick={()=>setMenuOpen(false)}>Dashboard</Link>
-{!loggedIn && <button className="drawerLoginBtn" onClick={()=>setLoggedIn(true)}>Log In</button>}
 </nav>
+<div className="drawerAuthFooter"> 
+    {!loggedIn ? (
+        <Link to="/login" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>
+            Log In
+        </Link>
+    ) : (
+        <div className="drawerUserBlock">
+            <p>Logged in as <b>{user.username}</b></p>
+            <button className="drawerLogoutBtn" onClick={() => { logout(); setMenuOpen(false); }}>
+            Log Out
+            </button>
+        </div>
+    )}
+  </div>
 </div>
 {menuOpen && <div className="drawerOverlay" onClick={()=>setMenuOpen(false)} />}
 

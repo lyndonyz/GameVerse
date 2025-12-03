@@ -27,13 +27,10 @@ function Dashboard() {
       {/* LEFT DRAWER SIDEBAR */}
         <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
             <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
-
-            {/* 1. TOP: Main Navigation Links */}
             <nav className="drawerMenu">
             <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
             </nav>
 
-            {/* 2. BOTTOM: Login/Logout/User Info - New container */}
             <div className="drawerAuthFooter"> 
             {!loggedIn ? (
                 <Link to="/login" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>
