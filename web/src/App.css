@@ -571,3 +571,41 @@ body {
   background: #7b00ff33;
   border-color: var(--brand);
 }
+
+.drawerAuthFooter {
+    margin-top: auto; 
+    padding-top: 20px; 
+    border-top: 1px solid var(--border);
+}
+
+.drawerAuthFooter a, .drawerAuthFooter .drawerUserBlock {
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--panel-3);
+    border: 1px solid var(--border);
+    display: block;
+    text-align: center;
+}
+
+.drawerUserBlock p {
+    margin: 0 0 10px 0;
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--panel-3);
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.drawerUserBlock button.drawerLogoutBtn {
+    width: 100%;
+    background: linear-gradient(180deg, var(--brand), var(--brand-2));
+    color: #05101a;
+    border: none;
+    padding: 10px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+}

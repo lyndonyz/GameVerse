@@ -5,7 +5,7 @@ import "./App.css";
 
 function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { loggedIn, setLoggedIn } = useAuth();
+  const { loggedIn, setLoggedIn, user, logout } = useAuth();
 
   return (
     <div className="layout">
@@ -25,25 +25,30 @@ function Dashboard() {
       </main>
 
       {/* LEFT DRAWER SIDEBAR */}
-      <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
-        <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
+        <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
+            <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
 
-        <nav className="drawerMenu">
-          <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
-          {!loggedIn ? (
-            <Link to="/login" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>
-                Log In
-            </Link>
+            {/* 1. TOP: Main Navigation Links */}
+            <nav className="drawerMenu">
+            <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+            </nav>
+
+            {/* 2. BOTTOM: Login/Logout/User Info - New container */}
+            <div className="drawerAuthFooter"> 
+            {!loggedIn ? (
+                <Link to="/login" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>
+                    Log In
+                </Link>
             ) : (
-            <div className="drawerUserBlock">
-                <p>Logged in as <b>{user.username}</b></p>
-                <button className="drawerLogoutBtn" onClick={() => { logout(); setMenuOpen(false); }}>
-                Log Out
-                </button>
-            </div>
+                <div className="drawerUserBlock">
+                    <p>Logged in as <b>{user.username}</b></p>
+                    <button className="drawerLogoutBtn" onClick={() => { logout(); setMenuOpen(false); }}>
+                    Log Out
+                    </button>
+                </div>
             )}
-        </nav>
-      </div>
+            </div>
+        </div>
 
       {/* OVERLAY */}
       {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
