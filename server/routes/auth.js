@@ -8,9 +8,9 @@ const {
 
 // Login handler
 router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
-
-  const user = await validateLogin(username, password);
+  const { identifier, password } = req.body; 
+  const user = await validateLogin(identifier, password);
+  
   if (!user) {
     return res.status(401).json({ error: "INVALID_LOGIN" });
   }

@@ -10,6 +10,7 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false); 
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,7 +25,7 @@ export default function Login() {
       const res = await fetch("http://localhost:8080/auth/login", { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ identifier: username, password }) 
       });
 
       const data = await res.json();
@@ -44,37 +45,58 @@ export default function Login() {
   };
 
   return (
-    <div className="loginContainer">
-      <div className="loginBox">
-        <h1>Login</h1>
+    <div className="layout"> 
+      <header className="header">
+        <button className="hamburger" onClick={() => setMenuOpen(true)}>☰</button>
+        <div className="brand" role="button" tabIndex={0}>
+          GAMEVERSE
+        </div>
+      </header>
+      <div className="loginContainer">
+        <div className="loginBox">
+          <h1>Login</h1>
 
-        <form onSubmit={handleLogin}>
-          <input
-            className="loginInput"
-            type="text"
-            placeholder="Username, Email"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
+          <form onSubmit={handleLogin}>
+            <input
+              className="loginInput"
+              type="text"
+              placeholder="Username, Email"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
 
-          <input
-            className="loginInput"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            <input
+              className="loginInput"
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
-          <button className="loginBtn" type="submit">
-            Log In
-          </button>
-        </form>
-        {error && <p className="errorText">{error}</p>}
+            <button className="loginBtn" type="submit">
+              Log In
+            </button>
+          </form>
+          {error && <p className="errorText">{error}</p>}
 
-        <p className="loginHint">
-          Don't have an account? <Link to="/register">Create one Here!</Link> 
-        </p>
+          <p className="loginHint">
+            Don't have an account? <Link to="/register">Create one Here!</Link> 
+          </p>
+        </div>
       </div>
+      <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
+        <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
+        <nav className="drawerMenu">
+          <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+        </nav>
+        <div className="drawerAuthFooter"> 
+          <Link to="/register" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>
+              Create Account
+          </Link>
+        </div>
+      </div>
+      {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
     </div>
   );
 }

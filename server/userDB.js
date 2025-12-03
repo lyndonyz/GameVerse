@@ -162,10 +162,24 @@ async function userExists(username) {
 // ------------------
 // Validate Login (userinfo/null)
 // ------------------
-async function validateLogin(username, password) {
-    const user = await getUserByUsername(username);
+async function validateLogin(identifier, password) {
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier); 
+    let user = null;
+    if (isEmail) {
+        const response = await retrySystemInstance.execute(() =>
+            client.postFind({
+                db: USERS_DB,
+                selector: { email: identifier },
+                limit: 1
+            })
+        );
+        user = response.result.docs[0] || null;
+    } 
+    else {
+        user = await getUserByUsername(identifier);
+    }
     if (!user) return null;
-    return user.password === password ? user : null;
+    return user.password === password ? user : null; 
 }
 
 // ------------------
