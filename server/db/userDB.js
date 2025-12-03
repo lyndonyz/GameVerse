@@ -290,6 +290,17 @@ async function updateUsername(oldUsername, newUsername) {
             console.error(`User "${oldUsername}" not found`);
             return null;
         }
+        const existing = await retrySystemInstance.execute(() =>
+            client.postFind({
+                db: USERS_DB,
+                selector: { username: { $regex: `(?i)^${newUsername}$` } },
+                limit: 1
+            })
+        );
+
+        if (existing.result.docs.length > 0) {
+            return { error: "NEW_USERNAME_TAKEN" };
+        }
 
         const updatedDoc = { ...user, username: newUsername };
 
