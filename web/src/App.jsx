@@ -19,6 +19,9 @@ function App() {
 
   const [sortOrder, setSortOrder] = useState("");
 
+  // comment
+  const [commentRating, setCommentRating] = useState("");
+
   // moved filters into panel
   const [platform, setPlatform] = useState("");
   const [vr, setVr] = useState("");
@@ -282,12 +285,28 @@ function App() {
       const r = await fetch(`/api/game/${selected.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ 
+        text,
+        rating: commentRating ? Number(commentRating) : null,
+        user: user.username, 
+      }),
       });
       const data = await r.json();
       if (data.error) throw new Error(data.error);
+
+      const newComment = {
+        text: data.comment.comment || text,
+        username: user.username,
+        at: new Date().toLocaleString(),
+        rating: data.comment.rating || commentRating,
+        _id: data.comment._id
+      };
+
+
       setCommentInput("");
-      setComments((prev) => [...prev, data.comment]);
+      setCommentRating("");
+      // SET COMMENTS
+      setComments((prev) => [...prev, newComment]);
       setTab("comments");
     } catch {
       alert("Failed to save comment");
@@ -731,21 +750,38 @@ function App() {
             ) : (
               <div className="panel">
                 <form className="commentForm" onSubmit={addComment}>
-                  <textarea
-                    rows={3}
-                    placeholder="Write your thoughts…"
-                    value={commentInput}
-                    onChange={(e) => setCommentInput(e.target.value)}
-                  />
-                  <div className="right">
-                    <button
-                      className="btn"
-                      disabled={saving || !commentInput.trim()}
-                    >
-                      {saving ? "Posting…" : "Post Comment"}
-                    </button>
-                  </div>
-                </form>
+                      
+                      <div className="ratingRow">
+                        <label>Rating: </label>
+                        <select
+                          value={commentRating}
+                          onChange={(e) => setCommentRating(e.target.value)}
+                        >
+                          <option value="">No Rating</option>
+                          {[1,2,3,4,5].map((n) => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <textarea
+                        rows={3}
+                        placeholder="Write your thoughts…"
+                        value={commentInput}
+                        onChange={(e) => setCommentInput(e.target.value)}
+                      />
+
+                      
+                      
+                      <div className="right">
+                        <button
+                          className="btn"
+                          disabled={saving || !commentInput.trim()|| !commentRating || !user?.username}
+                        >
+                          {saving ? "Posting…" : "Post Comment"}
+                        </button>
+                      </div>
+                    </form>
+
 
                 <ul className="commentList">
                   {comments.length === 0 ? (
@@ -753,9 +789,10 @@ function App() {
                   ) : (
                     comments.map((c, i) => (
                       <li key={i} className="comment">
-                        <div className="commentText">{c.text}</div>
+                        <div className="commentText">{c.rating} ★ - {c.text}</div>
                         <div className="commentMeta">
-                          {new Date(c.at).toLocaleString()}
+                          {c.username} · {c.at}
+
                         </div>
                       </li>
                     ))

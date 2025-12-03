@@ -8,12 +8,21 @@ const PORT = process.env.PORT || 8080;
 const authRoutes = require("./routes/auth");
 const { retryFetch } = require("./retryFetch");
 
+
+
+const {
+  addComment,
+  getCommentsByGameID,
+  getCommentById,
+  getAvgRatingForGameID,
+  deleteComment
+} = require("./db/commentDB");
+
+
 app.use(cors());
 app.use(express.json());
 app.use("/auth", authRoutes);
 
-// --- In-memory comments store ---
-const commentsByGame = Object.create(null);
 
 // Health
 app.get("/api", (_req, res) => res.json({ ok: true }));
@@ -263,21 +272,59 @@ app.get("/api/game/:id", async (req, res) => {
   }
 });
 
-// --- Comments ---
-app.get("/api/game/:id/comments", (req, res) => {
+// --- Comments Updated ---
+app.get("/api/game/:id/comments", async (req, res) => {
   const { id } = req.params;
-  res.json({ comments: commentsByGame[id] || [] });
+    const commentIds = await getCommentsByGameID(id); // gets list of comment IDs
+    // get the comments
+    const comments = await Promise.all(commentIds.map(getCommentById));
+    
+    const mappedComments = comments
+      .filter(c => c !== null)
+      .map(c => ({
+        id: c._id,
+        text: c.comment,
+        username: c.username,
+        at: c.createdAt,
+        rating: c.rating,
+      }));
+
+    res.json({ comments: mappedComments });
 });
 
-app.post("/api/game/:id/comments", (req, res) => {
+app.post("/api/game/:id/comments", async (req, res) => {
   const { id } = req.params;
   const text = (req.body?.text || "").trim();
-  if (!text) return res.status(400).json({ error: "Comment text is required" });
+  const rating = req.body.rating;
+  // TODO: replace "Temp" with actual logged-in username from auth
+  const username = req.body.user; 
 
-  if (!commentsByGame[id]) commentsByGame[id] = [];
-  const entry = { text, at: new Date().toISOString() };
-  commentsByGame[id].push(entry);
-  res.status(201).json({ ok: true, comment: entry });
+  if (!text || !username) {
+    return res.status(400).json({ error: "Username and comment text are required" });
+  }
+  if (!rating) {
+    return res.status(400).json({ error: "Rating is required" });
+  }
+
+  try {
+    const newCommentDoc = await addComment(id, username, text, rating);
+
+    if (!newCommentDoc) throw new Error("Failed to add comment");
+
+    // Map fields for frontend
+    const comment = {
+      id: newCommentDoc._id,
+      text: newCommentDoc.comment,
+      username: newCommentDoc.username,
+      at: newCommentDoc.createdAt,
+      rating: newCommentDoc.rating
+    };
+
+    res.status(201).json({ ok: true, comment });
+  } catch (err) {
+    console.error("Failed to add comment:", err);
+    res.status(500).json({ error: "Failed to add comment" });
+  }
 });
 
 app.listen(PORT, () => {
