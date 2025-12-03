@@ -1,63 +1,58 @@
 const {
-addComment,
-getCommentById,
-getCommentsByGameID,
-deleteComment,
-getAvgRatingForGameID
+  addComment,
+  getCommentById,
+  getCommentsByGameID,
+  deleteComment,
+  getAvgRatingForGameID
 } = require("./commentDB"); // adjust path if needed
 
-// Helper delay function to avoid rate limits
+// Helper wait
 function wait(ms) {
-return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 (async () => {
-console.log("=== COMMENTS TEST START ===");
+  console.log("=== COMMENTS TEST START ===\n");
 
-const GAME_ID = "game123";
+  // --- Add Comments ---
+  console.log("\n--- Add Comments ---");
+  const comment1 = await addComment("game1", "userA", "Great game!", 5);
+  console.log("Added comment 1:", comment1);
 
-// --- Add Comments ---
-console.log("\n--- Adding Comments ---");
-const comment1 = await addComment(GAME_ID, "user1", "Great game!", 5);
-console.log("Added comment 1:", comment1);
-await wait(300);
+  const comment2 = await addComment("game1", "userB", "Pretty fun.", 4);
+  console.log("Added comment 2:", comment2);
 
-const comment2 = await addComment(GAME_ID, "user2", "Not bad.", 4);
-console.log("Added comment 2:", comment2);
-await wait(300);
+  const comment3 = await addComment("game2", "userA", "Not bad.", 3);
+  console.log("Added comment 3:", comment3);
 
-const comment3 = await addComment(GAME_ID, "user3", "Could be better.", 3);
-console.log("Added comment 3:", comment3);
-await wait(300);
+  // --- Get Comment by ID ---
+  console.log("\n--- Get Comment by ID ---");
+  const fetchedComment = await getCommentById(comment1.id);
+  console.log("Fetched comment 1:", fetchedComment);
 
-// --- Get Comments by Game ID ---
-console.log("\n--- Get Comment IDs by Game ID ---");
-const commentIds = await getCommentsByGameID(GAME_ID);
-console.log("Comment IDs for game:", commentIds);
-await wait(300);
+  // --- Get Comments by Game ID ---
+  console.log("\n--- Get Comments by Game ID (game1) ---");
+  const game1Comments = await getCommentsByGameID("game1");
+  console.log("Comment IDs for game1:", game1Comments);
 
-// --- Get Individual Comment ---
-console.log("\n--- Fetch Individual Comment ---");
-if (commentIds.length > 0) {
-const commentDoc = await getCommentById(commentIds[0]);
-console.log("First comment details:", commentDoc);
-await wait(300);
-}
+  // --- Get Average Rating ---
+  console.log("\n--- Get Average Rating for Game ---");
+  const avgRatingGame1 = await getAvgRatingForGameID("game1");
+  console.log("Average rating for game1:", avgRatingGame1);
 
-// --- Get Average Rating ---
-console.log("\n--- Get Average Rating ---");
-const avgRating = await getAvgRatingForGameID(GAME_ID);
-console.log("Average rating for game:", avgRating);
-await wait(300);
+  const avgRatingGame2 = await getAvgRatingForGameID("game2");
+  console.log("Average rating for game2:", avgRatingGame2);
 
-// --- Cleanup: Delete Comments ---
-console.log("\n--- Deleting Comments ---");
-for (const id of commentIds) {
-const commentDoc = await getCommentById(id);
-const delResult = await deleteComment(commentDoc._id, commentDoc._rev);
-console.log(`Deleted comment ${id}:`, delResult);
-await wait(300);
-}
+  // --- Delete Comments ---
+  console.log("\n--- Delete Comments ---");
+  console.log("Deleting comment1:", await deleteComment(comment1.id, comment1.rev));
+  console.log("Deleting comment2:", await deleteComment(comment2.id, comment2.rev));
+  console.log("Deleting comment3:", await deleteComment(comment3.id, comment3.rev));
 
-console.log("\n=== COMMENTS TEST END ===");
+  // --- Confirm Deletion ---
+  console.log("\n--- Confirm Deletion ---");
+  const remainingCommentsGame1 = await getCommentsByGameID("game1");
+  console.log("Remaining comments for game1:", remainingCommentsGame1);
+
+  console.log("\n=== COMMENTS TEST END ===");
 })();
