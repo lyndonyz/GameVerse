@@ -9,7 +9,7 @@ const {
   updatePassword,
   getUsernameById,
   userExists
-} = require("../userDB");
+} = require("../db/userDB");
 
 // Login handler
 router.post("/login", async (req, res) => {
