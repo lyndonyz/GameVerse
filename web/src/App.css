@@ -739,3 +739,12 @@ body {
 
 
 
+.commentForm select {
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}

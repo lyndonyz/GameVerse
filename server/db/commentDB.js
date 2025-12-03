@@ -23,7 +23,8 @@ async function addComment(_game_id, _username, _comment, _rating) {
       username: _username,
       comment: _comment,
       gameid: _game_id,
-      rating: _rating
+      rating: _rating,
+      createdAt: new Date().toLocaleString()
     };
     
     const response = await retrySystemInstance.execute(() =>
@@ -58,6 +59,26 @@ async function getCommentById(id) {
     return null;
   }
 }
+
+// ------------------
+// Get comment's created date by ID
+// ------------------
+async function getCommentDateById(id) {
+  const comment = await getCommentById(id);
+  if (!comment) return null;
+  return comment.createdAt || null;
+}
+
+// ------------------
+// Get comment's username by ID
+// ------------------
+async function getCommentUsernameById(id) {
+  const comment = await getCommentById(id);
+  if (!comment) return null;
+  return comment.username || null;
+}
+
+
 // ------------------
 // Delete comment
 // ------------------
@@ -127,5 +148,7 @@ module.exports = {
   getCommentById,
   getCommentsByGameID,
   deleteComment,
-  getAvgRatingForGameID
+  getAvgRatingForGameID,
+  getCommentDateById,
+  getCommentUsernameById
 };

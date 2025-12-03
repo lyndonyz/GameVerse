@@ -1,0 +1,9 @@
+node_modules
+dist
+.npm
+.git
+.gitignore
+.vscode
+README.md
+vite.config.js
+eslint.config.js
