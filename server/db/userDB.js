@@ -464,17 +464,22 @@ async function gameInList(username, gameName) {
     return user.list.some(entry => entry.game === gameName);
 }
 
+// ------------------
+// Get a list of all games a user has
+// ------------------
 async function getAllGames(username) {
     const user = await getUserByUsername(username);
     if (!user) {
             console.error(`User "${username}" not found`);
             return null;
         }
-
     user.list = user.list || [];
     return user.list;
 }
 
+// ------------------
+// Gets all the games from a user with a specific status
+// ------------------
 async function getGamesByStatus(username, status) {
     const user = await getUserByUsername(username);
     if (!user) {

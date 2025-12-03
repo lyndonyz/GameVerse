@@ -77,6 +77,9 @@ async function deleteComment(id, rev) {
   }
 }
 
+// ------------------
+// Gets comments by gameID
+// ------------------
 async function getCommentsByGameID(game_id) {
     try {
     const response = await retrySystemInstance.execute(() =>
@@ -94,6 +97,9 @@ async function getCommentsByGameID(game_id) {
     }
 }
 
+// ------------------
+// Average rating for any given game
+// ------------------
 async function getAvgRatingForGameID(game_id) {
     try {
     const response = await retrySystemInstance.execute(() =>
