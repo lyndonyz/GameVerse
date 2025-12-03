@@ -1,9 +1,67 @@
-import "./dashboard.css";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "./AuthContext.jsx";
+import "./App.css";
 
-export default function Dashboard() {
+function Dashboard() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { loggedIn, setLoggedIn, user, logout } = useAuth();
+
   return (
-    <div className="dashboard">
-      <h1>Dashboard</h1>
+    <div className="layout">
+
+      {/* HEADER */}
+      <header className="header">
+        <button className="hamburger" onClick={() => setMenuOpen(true)}>☰</button>
+        <div className="brand" role="button" tabIndex={0}>
+          GAMEVERSE
+        </div>
+
+      </header>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="main dashboardMain">
+        {loggedIn ? (
+          // Logged In: Personalized Dashboard Greeting
+          <h1>Your Dashboard, {user.username}</h1>
+        ) : (
+          // Logged Out: Login Prompt
+          <div className="loginPromptContainer">
+            <h1>Please log in to view your dashboard.</h1>
+            <Link to="/login" className="btn loginPromptBtn">
+              Go to Login
+            </Link>
+          </div>
+        )}
+      </main>
+
+      {/* LEFT DRAWER SIDEBAR */}
+        <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
+            <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
+            <nav className="drawerMenu">
+            <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
+            </nav>
+
+            <div className="drawerAuthFooter"> 
+            {!loggedIn ? (
+                <Link to="/login" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>
+                    Log In
+                </Link>
+            ) : (
+                <div className="drawerUserBlock">
+                    <p>Logged in as <b>{user.username}</b></p>
+                    <button className="drawerLogoutBtn" onClick={() => { logout(); setMenuOpen(false); }}>
+                    Log Out
+                    </button>
+                </div>
+            )}
+            </div>
+        </div>
+
+      {/* OVERLAY */}
+      {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
     </div>
   );
 }
+
+export default Dashboard;

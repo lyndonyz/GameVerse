@@ -23,6 +23,7 @@ function wait(ms) {
 (async () => {
     console.log("=== USER TEST START ===");
 
+<<<<<<< HEAD
     // --- Add User (no email) ---
     console.log("\n--- Add User (no email) ---");
     const user1 = await addUser("Josh", "password123");

@@ -23,6 +23,7 @@
     "concurrently": "^9.2.1"
   },
   "dependencies": {
-    "@ibm-cloud/cloudant": "^0.12.11"
+    "@ibm-cloud/cloudant": "^0.12.11",
+    "react-router-dom": "^7.10.0"
   }
 }
