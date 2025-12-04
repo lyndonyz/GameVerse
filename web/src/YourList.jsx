@@ -23,7 +23,8 @@ function YourList() {
       }
 
       try {
-        const r = await fetch(`${API_BASE_URL}/auth/getAllGames`, {
+        // const r = await fetch(`${API_BASE_URL}/auth/getAllGames`, {
+        const r = await fetch("http://localhost:8000/auth/getAllGames", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username: user.username })

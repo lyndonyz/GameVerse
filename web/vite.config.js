@@ -9,8 +9,8 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      // "/api": "http://localhost:8000",
-      "/api": "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud",
+      "/api": "http://localhost:8000",
+      // "/api": "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud",
     },
   },
 });
