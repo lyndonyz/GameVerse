@@ -422,18 +422,18 @@ async function removeGameFromList(username, gameName) {
 // ------------------
 // Add a game to the user's list
 // ------------------
-async function addGameToList(username, gameID, image, slug, status = 0) {
+async function addGameToList(username, gameName, image, slug, status = 0) {
     const user = await getUserByUsername(username);
     if (!user) {
             console.error(`User "${username}" not found`);
             return null;
         }
     user.list = user.list || [];
-    if (user.list.some(entry => entry.gameID === gameID)) {
+    if (user.list.some(entry => entry.game === gameName)) {
         return { error: "GAME_ALREADY_EXISTS" };
     }
     user.list.push({
-  gameID: gameID,
+  game: gameName,
   image: image,
   slug: slug,
   status: status
