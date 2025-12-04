@@ -4,7 +4,8 @@ import { useAuth } from "./AuthContext.jsx";
 import "./App.css";
 
 function App() {
-  const API_BASE_URL = "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
+  //const API_BASE_URL = "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
+  const API_BASE_URL = "http://localhost:8000";
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [results, setResults] = useState([]);
