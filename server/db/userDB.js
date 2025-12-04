@@ -434,9 +434,9 @@ async function addGameToList(username, gameName, image, slug, status = 0) {
     }
     user.list.push({
   game: gameName,
+  status: status,
   image: image,
-  slug: slug,
-  status: status
+  slug: slug
 });
 
     const result = await retrySystemInstance.execute(() =>
