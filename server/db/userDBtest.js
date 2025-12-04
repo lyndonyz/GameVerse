@@ -28,6 +28,8 @@ function logSection(name) {
 }
 
 (async () => {
+console.log(await addGameToList("Josh", "t_gameId2", "t_image", "t_slug", 3));
+
   logSection("USER TESTS START");
 
   // ============
@@ -125,9 +127,9 @@ function logSection(name) {
   // ============
 
   logSection("Add Games to User List");
-  console.log(await addGameToList("alpha2", "Minecraft", 1));
-  console.log(await addGameToList("alpha2", "Terraria", 3));
-  console.log(await addGameToList("alpha2", "Celeste", 2));
+  console.log(await addGameToList("alpha2", "Minecraft", "0", "0", 1));
+  console.log(await addGameToList("alpha2", "Terraria",  "0", "0",3));
+  console.log(await addGameToList("alpha2", "Celeste", "0", "0", 2));
 
   logSection("Add Game (User Not Found)");
   console.log(await addGameToList("unknownUser", "GameX", 1));
