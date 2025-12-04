@@ -21,116 +21,160 @@ const {
   getGamesByStatus
 } = require("./userDB");
 
-// Helper wait
-function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+function logSection(name) {
+  console.log("\n==============================");
+  console.log(name);
+  console.log("==============================");
 }
 
 (async () => {
-  console.log("=== USER TEST START ===\n");
+  logSection("USER TESTS START");
 
-  // --- Add User (no email) ---
-  console.log("\n--- Add User (no email) ---");
-  const user1 = await addUser("testuser", "password123");
-  console.log("Added:", user1);
+  // ============
+  // USER CREATION
+  // ============
 
+  logSection("Add User (Valid)");
+  const u1 = await addUser("alpha", "pass123");
+  console.log(u1);
 
-  // --- Add User with Email ---
-  console.log("\n--- Add User with Email ---");
-  const user2 = await addUserWithEmail("testuser", "password123", "test@example.com");
-  console.log("Added:", user2);
+  logSection("Add User With Email (Valid)");
+  const u2 = await addUserWithEmail("beta", "mypassword", "beta@example.com");
+  console.log(u2);
 
-  // --- Check if user exists ---
-  console.log("\n--- Check if user exists ---");
-  console.log("User exists?", await userExists("testuser"));
+  logSection("Add User (Duplicate Username)");
+  const uDup = await addUser("alpha", "anotherpass");
+  console.log(uDup); // expect failure / conflict
 
-  // --- Get User ID ---
-  console.log("\n--- Get User ID ---");
-  const userId = await getUserId("testuser");
-  console.log("User ID:", userId);
+  logSection("Add User With Email (Duplicate Username)");
+  const uDup2 = await addUserWithEmail("beta", "anotherpass", "another@example.com");
+  console.log(uDup2); // expect failure
 
-  // --- Get Username by ID ---
-  console.log("\n--- Get Username by ID ---");
-  console.log("Username from ID:", await getUsernameById(userId));
+  // ============
+  // EXISTENCE & LOOKUP
+  // ============
 
-  // --- Get User by Username ---
-  console.log("\n--- Get User by Username ---");
-  console.log("Fetched user document:", await getUserByUsername("testuser"));
+  logSection("User Exists (True)");
+  console.log(await userExists("alpha"));
 
-  // --- Get Email ---
-  console.log("\n--- Get Email ---");
-  console.log("Email:", await getEmail("testuser"));
+  logSection("User Exists (False)");
+  console.log(await userExists("unknownUser123"));
 
-  // --- Validate Login ---
-  console.log("\n--- Validate Login ---");
-  console.log("Valid login result:", await validateLogin("testuser", "password123"));
+  logSection("Get User ID (Valid)");
+  const alphaId = await getUserId("alpha");
+  console.log(alphaId);
 
-  // --- Update Email ---
-  console.log("\n--- Update Email ---");
-  console.log("Updated email:", await updateEmail("testuser", "newemail@example.com"));
+  logSection("Get Username by ID (Valid)");
+  console.log(await getUsernameById(alphaId));
 
-  // --- Confirm Email Updated ---
-  console.log("\n--- Confirm Updated Email ---");
-  console.log("Email now:", await getEmail("testuser"));
+  logSection("Get Username by ID (Invalid ID)");
+  console.log(await getUsernameById("madeUpID"));
 
-  // --- Update Username ---
-  console.log("\n--- Update Username ---");
-  await updateUsername("testuser", "testuser2");
-  console.log("Username updated.");
+  logSection("Get User by Username");
+  console.log(await getUserByUsername("beta"));
 
-  // --- Update Password ---
-  console.log("\n--- Update Password ---");
-  console.log("Updated password:", await updatePassword("testuser2", "newpassword123"));
+  logSection("Get User by Username (Not Found)");
+  console.log(await getUserByUsername("ghost"));
 
-  // =============================
-  // GAME / LIST TESTS
-  // =============================
+  logSection("Get Email (Valid)");
+  console.log(await getEmail("beta"));
 
-  console.log("\n========================");
-  console.log("GAME LIST TESTS START");
-  console.log("========================");
+  logSection("Get Email (No Email)");
+  console.log(await getEmail("alpha"));
 
-  // --- Add games ---
-  console.log("\n--- Add Games to List ---");
-  console.log(await addGameToList("testuser2", "Minecraft", 1));
-  console.log(await addGameToList("testuser2", "Terraria", 3));
-  console.log(await addGameToList("testuser2", "OneShot", 2));
-  console.log(await addGameToList("asd", "Undertale", 2));
-  console.log(await addGameToList("testuser2", "Ultrakill", 2));
+  logSection("Get Email (Invalid User)");
+  console.log(await getEmail("nosuchuser"));
 
-  // --- Check if game exists ---
-  console.log("\n--- Check if game exists ---");
-  console.log("Has Minecraft?", await gameInList("testuser2", "Minecraft"));
+  // ============
+  // LOGIN TESTS
+  // ============
 
-  // --- Update game status ---
-  console.log("\n--- Update Game Status ---");
-  console.log(await updateGameStatus("testuser2", "Minecraft", 6)); // set to Completed
+  logSection("Validate Login (Correct Password)");
+  console.log(await validateLogin("alpha", "pass123"));
 
-  // --- Get all games ---
-  console.log("\n--- Get All Games ---");
-  console.log(await getAllGames("testuser2"));
+  logSection("Validate Login (Wrong Password)");
+  console.log(await validateLogin("alpha", "wrongpassword"));
 
-  // --- Get games by specific status ---
-  console.log("\n--- Get Games by Status (2 = Completed) ---");
-  console.log(await getGamesByStatus("testuser2", 2));
+  logSection("Validate Login (User Not Found)");
+  console.log(await validateLogin("unknownUser", "password"));
 
-  // --- Remove a game ---
-  console.log("\n--- Remove Game From List ---");
-  console.log(await removeGameFromList("testuser2", "OneShot"));
+  // ============
+  // UPDATE FIELDS
+  // ============
 
-  // --- Confirm List After Remove ---
-  console.log("\n--- All Games After Removal ---");
-  console.log(await getAllGames("testuser2"));
+  logSection("Update Email (Valid)");
+  console.log(await updateEmail("beta", "newbeta@example.com"));
 
-  // =============================
+  logSection("Update Email (Invalid User)");
+  console.log(await updateEmail("ghostUser", "nothing@example.com"));
 
-  // --- List all users ---
-  console.log("\n--- List Users ---");
+  logSection("Update Username (Valid)");
+  console.log(await updateUsername("alpha", "alpha2"));
+
+  logSection("Update Username (Username Taken)");
+  console.log(await updateUsername("beta", "alpha2")); // alpha2 already used
+
+  logSection("Update Password (Valid)");
+  console.log(await updatePassword("alpha2", "newpass999"));
+
+  logSection("Update Password (Invalid User)");
+  console.log(await updatePassword("ghostUser", "whatever"));
+
+  // ============
+  // GAME LIST TESTS
+  // ============
+
+  logSection("Add Games to User List");
+  console.log(await addGameToList("alpha2", "Minecraft", 1));
+  console.log(await addGameToList("alpha2", "Terraria", 3));
+  console.log(await addGameToList("alpha2", "Celeste", 2));
+
+  logSection("Add Game (User Not Found)");
+  console.log(await addGameToList("unknownUser", "GameX", 1));
+
+  logSection("Check if Game Exists");
+  console.log("Has Minecraft:", await gameInList("alpha2", "Minecraft"));
+
+  logSection("Check if Game Exists (Not Found)");
+  console.log(await gameInList("alpha2", "NonexistentGame"));
+
+  logSection("Update Game Status (Valid)");
+  console.log(await updateGameStatus("alpha2", "Minecraft", 6));
+
+  logSection("Update Game Status (Game Not Found)");
+  console.log(await updateGameStatus("alpha2", "WrongGame", 3));
+
+  logSection("Get All Games");
+  console.log(await getAllGames("alpha2"));
+
+  logSection("Get Games By Status (2)");
+  console.log(await getGamesByStatus("alpha2", 2));
+
+  logSection("Get Games By Status (Not Found)");
+  console.log(await getGamesByStatus("alpha2", 99));
+
+  logSection("Remove Game From List (Valid)");
+  console.log(await removeGameFromList("alpha2", "Celeste"));
+
+  logSection("Remove Game (Not Found)");
+  console.log(await removeGameFromList("alpha2", "GameDoesNotExist"));
+
+  logSection("All Games After Removal");
+  console.log(await getAllGames("alpha2"));
+
+  // ============
+  // DELETE USER
+  // ============
+
+  logSection("List All Users");
   await listUsers();
 
-  // --- Delete User ---
-  console.log("\n--- Delete User ---");
-  console.log(await deleteUser("testuser2"));
+  logSection("Delete User (Valid)");
+  console.log(await deleteUser("alpha2"));
+  console.log(await deleteUser("beta"));
 
-  console.log("\n=== USER TEST END ===");
+  logSection("Delete User (Invalid)");
+  console.log(await deleteUser("ghostUser"));
+
+  logSection("USER TEST END");
 })();
