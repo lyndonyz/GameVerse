@@ -141,6 +141,7 @@ async function getEmail(username) {
 // Get a user by username
 // ------------------
 async function getUserByUsername(_username) {
+    try {
         const response = await retrySystemInstance.execute(() =>
             client.postFind({
                 db: USERS_DB,
@@ -149,14 +150,22 @@ async function getUserByUsername(_username) {
             })
         );
         return response.result.docs[0] || null;
+    } catch (err) {
+        throw err;
+    }
 }
 
 // ------------------
 // Check if user exists (true/false)
 // ------------------
 async function userExists(username) {
-    const u = await getUserByUsername(username);
-    return !!u;
+    try {
+        const u = await getUserByUsername(username);
+        return !!u;
+    } catch (err) {
+        console.log(err.message);
+        return false;
+    }
 }
 
 // ------------------
