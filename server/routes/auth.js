@@ -155,7 +155,7 @@ const {
 
 // Add a game with default status (plan_to_play)
 router.post("/addGameToList", async (req, res) => {
-  const { username, gameName, status } = req.body;
+  const { username, gameName, image, slug, status } = req.body;
 
   if (!username || !gameName) {
     return res.status(400).json({ error: "MISSING_FIELDS" });
@@ -167,7 +167,13 @@ router.post("/addGameToList", async (req, res) => {
     return res.json({ error: "GAME_ALREADY_EXISTS" });
   }
 
-  const result = await addGameToList(username, gameName, status ?? 0);
+  const result = await addGameToList(
+  username,
+  gameName,
+  image,
+  slug,
+  status ?? 0
+);
 
   if (result && result.error) {
     return res.status(500).json({ error: "ADD_FAILED" });

@@ -4,6 +4,7 @@ import { useAuth } from "./AuthContext.jsx";
 import "./App.css";
 
 function App() {
+  const API_BASE_URL = "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [results, setResults] = useState([]);
@@ -337,57 +338,67 @@ function App() {
   };
 
   async function handleAddToList(game) {
-  if (!loggedIn || !user) {
-    alert("Please log in to save games.");
-    return;
-  }
-
-  try {
-    const r = await fetch("http://localhost:8080/auth/addGameToList", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: user.username,
-        gameName: game.name,
-        image: game.background_image || "",
-        slug: game.slug,
-        status: 0
-      })
-    });
-
-    const data = await r.json();
-
-    if (data.error === "GAME_ALREADY_EXISTS") {
-      alert("This game is already in your list.");
+    if (!loggedIn || !user) {
+      alert("Please log in to save games.");
       return;
     }
 
-    alert(`Added ${game.name} to your list!`);
-  } catch (err) {
-    console.error("ADD GAME ERROR:", err);
-  }
-}
-function handleAddFromModal() {
-  if (!selected) return;
-  handleAddToList(selected);
-}
-async function handleStatusChange(gameName, newStatus) {
-  try {
-    await fetch("http://localhost:8080/auth/updateGameStatus", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: user.username,
-        gameName,
-        newStatus: Number(newStatus)
-      })
-    });
+    try {
+      const r = await fetch(`${API_BASE_URL}/auth/addGameToList`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: user.username,
+          gameName: game.name,
+          image: game.image || game.background_image || "",
+          slug: game.slug,
+          status: 0
+        })
+      });
 
-    setGameStatus(Number(newStatus));
-  } catch (err) {
-    console.error("STATUS UPDATE ERROR:", err);
+      const data = await r.json();
+
+      if (data.error === "GAME_ALREADY_EXISTS") {
+        alert("This game is already in your list.");
+        return;
+      }
+
+      if (!data.success) {
+        console.error("ADD GAME ERROR:", data);
+        alert("Failed to add game.");
+        return;
+      }
+
+      alert(`Added ${game.name} to your list!`);
+    } catch (err) {
+      console.error("ADD GAME ERROR:", err);
+      alert("Network error while adding game.");
+    }
   }
-}
+
+  function handleAddFromModal() {
+    if (!selected) return;
+    handleAddToList(selected);
+  }
+
+  async function handleStatusChange(gameName, newStatus) {
+    try {
+      await fetch(`${API_BASE_URL}/auth/updateGameStatus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: user.username,
+          gameName,
+          newStatus: Number(newStatus)
+        })
+      });
+
+      setGameStatus(Number(newStatus));
+    } catch (err) {
+      console.error("STATUS UPDATE ERROR:", err);
+      alert("Failed to update status.");
+    }
+  }
 
 
   const headerTitle = cat ? (

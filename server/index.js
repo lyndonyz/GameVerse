@@ -3,7 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8000;
 
 const authRoutes = require("./routes/auth");
 const { retryFetch } = require("./retryFetch");

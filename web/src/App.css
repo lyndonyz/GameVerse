@@ -748,3 +748,68 @@ body {
   font-weight: 600;
   cursor: pointer;
 }
+
+.yourListGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+.yourListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: rgba(255,255,255,0.06);
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.yourListImg {
+  width: 140px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.yourListInfo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.yourListTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.yourListSlug {
+  margin-top: 4px;
+  color: #b99fe8;
+  font-size: 14px;
+}
+
+.yourListStatusRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.yourListStatusRight select {
+  margin-top: 4px;
+  padding: 6px;
+  border-radius: 8px;
+  background: #1f1f1f;
+  color: white;
+  border: 1px solid #444;
+  cursor: pointer;
+}
+.yourListMain {
+  display: block !important;
+  padding: 20px !important;
+}

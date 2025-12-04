@@ -60,7 +60,7 @@ function Settings() {
 
     setUsernameSaving(true);
     try {
-        // const res = await fetch("http://localhost:8080/auth/update/username", {
+        // const res = await fetch("http://localhost:8000/auth/update/username", {
         const res = await fetch(`${API_BASE_URL}/auth/update/username`, { 
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -106,7 +106,7 @@ function Settings() {
 
     setEmailSaving(true);
     try {
-        //const res = await fetch("http://localhost:8080/auth/update/email", {
+        //const res = await fetch("http://localhost:8000/auth/update/email", {
         const res = await fetch(`${API_BASE_URL}/auth/update/email`, { 
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -156,7 +156,7 @@ function Settings() {
 
     setPasswordSaving(true);
     try {
-        //const res = await fetch("http://localhost:8080/auth/update/password", {
+        //const res = await fetch("http://localhost:8000/auth/update/password", {
         const res = await fetch(`${API_BASE_URL}/auth/update/password`, { 
             method: "POST",
             headers: { "Content-Type": "application/json" },
