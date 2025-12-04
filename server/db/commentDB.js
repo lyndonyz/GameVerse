@@ -45,19 +45,15 @@ async function addComment(_game_id, _username, _comment, _rating) {
 // Get comment by ID
 // ------------------
 async function getCommentById(id) {
-  try {
         const response = await retrySystemInstance.execute(() =>
-            client.getDocument({
+            client.postFind({
                 db: COMMENTS_DB,
-                docId: id
+                selector: { _id: id },
+                limit: 1
             })
         );
 
-        return response.result;
-  } catch (err) {
-    console.error("getCommentById error:", err);
-    return null;
-  }
+        return response.result.docs[0] || null;
 }
 
 // ------------------
@@ -84,6 +80,12 @@ async function getCommentUsernameById(id) {
 // ------------------
 async function deleteComment(id, rev) {
   try {
+
+    const commentToFind = await getCommentById(id);
+    if (!commentToFind) {
+            console.error(`Comment "${id}" not found`);
+            return null;
+        }
     const response = await retrySystemInstance.execute(() =>
             client.deleteDocument({
                 db: COMMENTS_DB,

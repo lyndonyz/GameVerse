@@ -6,7 +6,7 @@ const {
   getAvgRatingForGameID,
   getCommentDateById,
   getCommentUsernameById
-} = require("./commentDB"); // adjust path if needed
+} = require("./commentDB");
 
 // Helper wait
 function wait(ms) {
@@ -16,64 +16,104 @@ function wait(ms) {
 (async () => {
   console.log("=== COMMENTS TEST START ===\n");
 
-  // --- Add Comments ---
-  console.log("\n--- Add Comments ---");
-  const comment1 = await addComment("game1", "userA", "Great game!", 5);
-  console.log("Added comment 1:", comment1);
+  //
+  // ─────────────────────────────────────────────
+  // 1. BASIC ADDING OF COMMENTS
+  // ─────────────────────────────────────────────
+  //
+  console.log("\n--- Add Comments (Normal Cases) ---");
+  const c1 = await addComment("game1", "userA", "Great game!", 5);
+  const c2 = await addComment("game1", "userB", "Pretty fun", 4);
+  const c3 = await addComment("game2", "userC", "Not bad", 3);
+  console.log("Added:", c1, c2, c3);
 
-  const comment2 = await addComment("game1", "userB", "Pretty fun.", 4);
-  console.log("Added comment 2:", comment2);
+  await wait(300);
 
-  const comment3 = await addComment("game2", "userA", "Not bad.", 3);
-  console.log("Added comment 3:", comment3);
+  //
+  // ─────────────────────────────────────────────
+  // 2. FETCH COMMENTS BY ID
+  // ─────────────────────────────────────────────
+  //
+  console.log("\n--- Get Comment by ID (Valid IDs) ---");
+  console.log(await getCommentById(c1.id));
+  console.log(await getCommentById(c2.id));
 
-  // wait to ensure timestamps differ
-  await wait(500);
+  console.log("\n--- Get Comment by ID (Invalid / Non-existing) ---");
+  console.log("Invalid ID:", await getCommentById("INVALID_ID"));
+  console.log("Missing ID:", await getCommentById(null));
 
-  // --- Get Comment by ID ---
-  console.log("\n--- Get Comment by ID ---");
-  const fetchedComment1 = await getCommentById(comment1.id);
-  console.log("Fetched comment 1:", fetchedComment1);
+  //
+  // ─────────────────────────────────────────────
+  // 3. USERNAME + DATE LOOKUP
+  // ─────────────────────────────────────────────
+  //
+  console.log("\n--- Get Username & Date (Valid ID) ---");
+  console.log("Username:", await getCommentUsernameById(c1.id));
+  console.log("CreatedAt:", await getCommentDateById(c1.id));
 
-  const fetchedComment2 = await getCommentById(comment2.id);
-  console.log("Fetched comment 2:", fetchedComment2);
+  console.log("\n--- Get Username & Date (Invalid ID) ---");
+  console.log("Username invalid:", await getCommentUsernameById("FAKE"));
+  console.log("Date invalid:", await getCommentDateById("FAKE"));
 
-  // --- Get Comment Username and Date ---
-  console.log("\n--- Get Comment Username and Date by ID ---");
-  const username1 = await getCommentUsernameById(comment1.id);
-  const date1 = await getCommentDateById(comment1.id);
-  console.log(`Comment1 by: ${username1}, created at: ${date1}`);
-
-  const username2 = await getCommentUsernameById(comment2.id);
-  const date2 = await getCommentDateById(comment2.id);
-  console.log(`Comment2 by: ${username2}, created at: ${date2}`);
-
-  // --- Get Comments by Game ID ---
+  //
+  // ─────────────────────────────────────────────
+  // 4. GET COMMENTS BY GAME ID
+  // ─────────────────────────────────────────────
+  //
   console.log("\n--- Get Comments by Game ID ---");
-  const game1CommentIds = await getCommentsByGameID("game1");
-  console.log("Comment IDs for game1:", game1CommentIds);
+  console.log("game1 IDs:", await getCommentsByGameID("game1"));
+  console.log("game2 IDs:", await getCommentsByGameID("game2"));
+  
+  console.log("non-existing game:", await getCommentsByGameID("does_not_exist"));
+  console.log("null game ID:", await getCommentsByGameID(null));
 
-  // --- Get Average Rating ---
-  console.log("\n--- Get Average Rating for Game ---");
-  const avgRatingGame1 = await getAvgRatingForGameID("game1");
-  console.log("Average rating for game1:", avgRatingGame1);
+  //
+  // ─────────────────────────────────────────────
+  // 5. GET AVERAGE RATING
+  // ─────────────────────────────────────────────
+  //
+  console.log("\n--- Average Rating Tests ---");
+  console.log("game1 avg:", await getAvgRatingForGameID("game1"));
+  console.log("game2 avg:", await getAvgRatingForGameID("game2"));
+  console.log("no ratings:", await getAvgRatingForGameID("no_comments_game"));
+  console.log("invalid game ID:", await getAvgRatingForGameID(null));
 
-  const avgRatingGame2 = await getAvgRatingForGameID("game2");
-  console.log("Average rating for game2:", avgRatingGame2);
+  //
+  // ─────────────────────────────────────────────
+  // 6. EDGE CASES: ADD COMMENT WITH BAD DATA
+  // ─────────────────────────────────────────────
+  //
+  console.log("\n--- Add Comment (Edge Cases) ---");
+  console.log("Missing username:", await addComment("gameX", null, "Test", 4));
+  console.log("Missing rating:", await addComment("gameX", "userZ", "Missing rating", null));
+  console.log("Missing comment:", await addComment("gameX", "userZ", null, 5));
 
-  // --- Delete Comments ---
-  console.log("\n--- Delete Comments ---");
-  console.log("Deleting comment1:", await deleteComment(comment1.id, comment1.rev));
-  console.log("Deleting comment2:", await deleteComment(comment2.id, comment2.rev));
-  console.log("Deleting comment3:", await deleteComment(comment3.id, comment3.rev));
+  //
+  // ─────────────────────────────────────────────
+  // 7. DELETE TESTING
+  // ─────────────────────────────────────────────
+  //
+  console.log("\n--- Delete Comments (Valid) ---");
+  console.log(await deleteComment(c1.id, c1.rev));
+  console.log(await deleteComment(c2.id, c2.rev));
+  console.log(await deleteComment(c3.id, c3.rev));
 
-  // --- Confirm Deletion ---
+  console.log("\n--- Delete Comments (Invalid) ---");
+  console.log(await deleteComment("BADID", "BADREV"));
+  console.log(await deleteComment(null, null));
+
+  //
+  // ─────────────────────────────────────────────
+  // 8. CONFIRM DELETIONS
+  // ─────────────────────────────────────────────
+  //
   console.log("\n--- Confirm Deletion ---");
-  const remainingGame1Comments = await getCommentsByGameID("game1");
-  console.log("Remaining comments for game1:", remainingGame1Comments);
-
-  const remainingGame2Comments = await getCommentsByGameID("game2");
-  console.log("Remaining comments for game2:", remainingGame2Comments);
+  console.log("game1 remaining:", await getCommentsByGameID("game1"));
+  console.log("game2 remaining:", await getCommentsByGameID("game2"));
+  
+  console.log("\n--- Fetch Deleted Comments ---");
+  console.log("c1 fetch:", await getCommentById(c1.id));
+  console.log("c2 fetch:", await getCommentById(c2.id));
 
   console.log("\n=== COMMENTS TEST END ===");
 })();
