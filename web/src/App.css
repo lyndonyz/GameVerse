@@ -433,7 +433,6 @@ body {
   padding: 8px;
 }
 
-/* COMMENTS */
 .commentForm {
   display: grid;
   gap: 8px;
@@ -530,10 +529,9 @@ body {
 }
 
 .leftDrawer.open {
-  left: 0;            /* slide in */
+  left: 0;
 }
 
-/* CLOSE BUTTON */
 .drawerClose {
   align-self: flex-end;
   background: transparent;
@@ -609,9 +607,6 @@ body {
     border-radius: 8px;
     cursor: pointer;
 }
-/* ---------------------------
-   FILTER PANEL (NEW)
-----------------------------*/
 
 .filterToggle {
   background: var(--panel-2);
@@ -682,6 +677,11 @@ body {
   position: absolute;
   bottom: 12px;
   right: 12px;
+}
+.addBtnWrapper2 {
+  position: absolute;
+  top: 40px;
+  right: 60px;
 }
 
 .addBtn {
@@ -812,4 +812,110 @@ body {
 .yourListMain {
   display: block !important;
   padding: 20px !important;
+}
+
+.addBtnWrapper select,
+.modalStatus select,
+select.statusSelect {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-block;
+  min-width: 140px;
+  height: 36px;
+  padding: 6px 36px 6px 10px; 
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: linear-gradient(#ffffff, #f7f8fa);
+  color: #111827;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.03);
+  position: relative;
+  vertical-align: middle;
+}
+
+.addBtnWrapper select,
+.modalStatus select,
+select.statusSelect {
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+
+.addBtnWrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.addBtnWrapper select option[value="0"],
+.modalStatus select option[value="0"],
+select.statusSelect option[value="0"] {
+  color: #6b7280; 
+}
+.addBtnWrapper select option[value="1"],
+.modalStatus select option[value="1"],
+select.statusSelect option[value="1"] {
+  color: #16a34a;
+}
+.addBtnWrapper select option[value="2"],
+.modalStatus select option[value="2"],
+select.statusSelect option[value="2"] {
+  color: #2563eb;
+}
+.addBtnWrapper select option[value="3"],
+.modalStatus select option[value="3"],
+select.statusSelect option[value="3"] {
+  color: #ef4444; 
+}
+
+
+.addBtnWrapper select:has(option[value="0"]:checked),
+.modalStatus select:has(option[value="0"]:checked),
+select.statusSelect:has(option[value="0"]:checked) {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+.addBtnWrapper select:has(option[value="1"]:checked),
+.modalStatus select:has(option[value="1"]:checked),
+select.statusSelect:has(option[value="1"]:checked) {
+  background-color: rgba(22,163,74,0.08);
+  color: #16a34a;
+}
+.addBtnWrapper select:has(option[value="2"]:checked),
+.modalStatus select:has(option[value="2"]:checked),
+select.statusSelect:has(option[value="2"]:checked) {
+  background-color: rgba(37,99,235,0.08);
+  color: #2563eb;
+}
+.addBtnWrapper select:has(option[value="3"]:checked),
+.modalStatus select:has(option[value="3"]:checked),
+select.statusSelect:has(option[value="3"]:checked) {
+  background-color: rgba(239,68,68,0.08);
+  color: #ef4444;
+}
+
+.addBtnWrapper select[value="0"],
+.modalStatus select[value="0"],
+select.statusSelect[value="0"] { color: #374151; }
+.addBtnWrapper select[value="1"],
+.modalStatus select[value="1"],
+select.statusSelect[value="1"] { color: #15803d; }
+.addBtnWrapper select[value="2"],
+.modalStatus select[value="2"],
+select.statusSelect[value="2"] { color: #1e40af; }
+.addBtnWrapper select[value="3"],
+.modalStatus select[value="3"],
+select.statusSelect[value="3"] { color: #b91c1c; }
+
+@media (max-width: 640px) {
+  .addBtnWrapper select,
+  .modalStatus select,
+  select.statusSelect {
+    min-width: 110px;
+    font-size: 13px;
+  }
 }

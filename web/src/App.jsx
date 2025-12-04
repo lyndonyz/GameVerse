@@ -44,6 +44,12 @@ function App() {
   const modalRef = useRef(null);
   const [tab, setTab] = useState("overview");
 
+  // NEW: store user's games in memory as a map { [gameName]: status }
+  const [userGames, setUserGames] = useState({});
+  
+  // normalize names for consistent string-to-string comparisons (trim + lowercase)
+  const normalizeName = (n) => (n || "").toString().trim().toLowerCase();
+
   const displayedResults = useMemo(() => {
     if (!sortOrder) return results;
     const rated = results.filter((r) => typeof r.rating === "number");
@@ -173,6 +179,47 @@ function App() {
       } catch {}
     })();
   }, []);
+
+  // NEW: load user's saved games into memory whenever user logs in / changes
+  useEffect(() => {
+    if (!loggedIn || !user?.username) {
+      setUserGames({});
+      return;
+    }
+    (async () => {
+      try {
+        // Use same endpoint/shape as YourList.jsx to fetch the saved games list
+        const url = `${API_BASE_URL}/auth/getAllGames`;
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: user.username }),
+        });
+        const data = await r.json();
+
+        // data.list is the shape returned in YourList.jsx
+        const items = Array.isArray(data.list) ? data.list : data.games || data.items || [];
+
+        const map = {};
+        (items || []).forEach((it) => {
+          const name =
+            it.gameName ||
+            it.game ||
+            it.name ||
+            it.title ||
+            it.slug ||
+            "";
+          const status = it.status ?? it.state ?? it.gameStatus ?? it.statusCode ?? 0;
+          const key = normalizeName(name);
+          if (key) map[key] = Number(status);
+        });
+        setUserGames(map);
+      } catch (err) {
+        console.error("Failed to load user games", err);
+        setUserGames({});
+      }
+    })();
+  }, [loggedIn, user]);
 
   // realtime search
   useEffect(() => {
@@ -369,7 +416,7 @@ function App() {
         return;
       }
 
-      alert(`Added ${game.name} to your list!`);
+      setUserGames((prev) => ({ ...prev, [normalizeName(game.name)]: 0 }));
     } catch (err) {
       console.error("ADD GAME ERROR:", err);
       alert("Network error while adding game.");
@@ -394,6 +441,8 @@ function App() {
       });
 
       setGameStatus(Number(newStatus));
+      // update local in-memory map so dropdown displays correct value
+      setUserGames((prev) => ({ ...prev, [normalizeName(gameName)]: Number(newStatus) }));
     } catch (err) {
       console.error("STATUS UPDATE ERROR:", err);
       alert("Failed to update status.");
@@ -418,6 +467,7 @@ function App() {
 
   return (
     <div className="layout">
+      {/* layout header */}
       <header className="header">
         <button className="hamburger" onClick={() => setMenuOpen(true)}>
           ☰
@@ -581,34 +631,58 @@ function App() {
 
           <ul className="list">
             {(loading ? Array.from({ length: 6 }) : displayedResults).map(
-              (g, idx) =>
-                loading ? (
-                  <li key={idx} className="row">
-                    <div className="rank skeleton" style={{ height: 18 }} />
-                    <div className="cover skeleton" />
-                    <div className="meta">
-                      <div
-                        className="skeleton"
-                        style={{ height: 18, width: "40%", marginBottom: 6 }}
-                      />
-                      <div
-                        className="skeleton"
-                        style={{ height: 14, width: "70%" }}
-                      />
-                    </div>
-                  </li>
-                ) : (
+              (g, idx) => {
+                if (loading) {
+                  return (
+                    <li key={idx} className="row">
+                      <div className="rank skeleton" style={{ height: 18 }} />
+                      <div className="cover skeleton" />
+                      <div className="meta">
+                        <div
+                          className="skeleton"
+                          style={{ height: 18, width: "40%", marginBottom: 6 }}
+                        />
+                        <div
+                          className="skeleton"
+                          style={{ height: 14, width: "70%" }}
+                        />
+                      </div>
+                    </li>
+                  );
+                }
+
+                const rank = (page - 1) * 24 + idx + 1;
+                const name = g?.name || "";
+                const key = normalizeName(name);
+                const inList = loggedIn && userGames[key] != null;
+
+                return (
                   <li key={g.id} className="row">
-                    <div className="rank">{(page - 1) * 24 + idx + 1}</div>
+                    <div className="rank">{rank}</div>
+
                     <div className="addBtnWrapper">
-    <button
-      className="addBtn"
-      onClick={() => handleAddToList(g)}
-      title="Add to your list"
-    >
-      +
-    </button>
-  </div>
+                      {inList ? (
+                        <select
+                          value={userGames[key]}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => handleStatusChange(name, e.target.value)}
+                          title="Change status"
+                        >
+                          <option value="0">Plan to Play</option>
+                          <option value="1">Playing</option>
+                          <option value="2">Completed</option>
+                          <option value="3">Dropped</option>
+                        </select>
+                      ) : (
+                        <button
+                          className="addBtn"
+                          onClick={() => handleAddToList(g)}
+                          title="Add to your list"
+                        >
+                          +
+                        </button>
+                      )}
+                    </div>
 
                     <div
                       className="cover"
@@ -616,29 +690,9 @@ function App() {
                       role="button"
                       tabIndex={0}
                     >
-                      {g.image ? (
-                        <img src={g.image} alt={g.name} />
-                      ) : (
-                        
-                        <div className="placeholder">No Image</div>
-                      )}
-                      {loggedIn && (
-  <div className="status-control">
-    <label>Status: </label>
-    <select
-      value={gameStatus}
-  onClick={(e) => e.stopPropagation()} 
-  onChange={(e) => handleStatusChange(selected.name, e.target.value)} 
->
-      <option value="0">Plan to Play</option>
-      <option value="1">Playing</option>
-      <option value="2">Completed</option>
-      <option value="3">Dropped</option>
-    </select>
-  </div>
-)}
-
+                      {g.image ? <img src={g.image} alt={name} /> : <div className="placeholder">No Image</div>}
                     </div>
+
                     <div className="meta">
                       <div
                         className="title"
@@ -646,7 +700,7 @@ function App() {
                         role="button"
                         tabIndex={0}
                       >
-                        {g.name}
+                        {name}
                       </div>
                       <div className="sub">
                         <span className="badge">★ {g.rating ?? "—"}</span>
@@ -654,7 +708,8 @@ function App() {
                       </div>
                     </div>
                   </li>
-                )
+                );
+              }
             )}
           </ul>
         </section>
@@ -750,14 +805,30 @@ function App() {
             <button className="closeX" onClick={closeModal}>
               ✕
             </button>
-            <button
-  className="addDetailBtn"
-  onClick={handleAddFromModal}
-  title="Add to your list"
->
-  +
-</button>
 
+            {loggedIn && userGames[normalizeName(selected.name)] != null ? (
+              <div className="addBtnWrapper2">
+               <div className="modalStatus">
+                 <select
+                   value={userGames[normalizeName(selected.name)]}
+                   onChange={(e) => handleStatusChange(selected.name, e.target.value)}
+                 >
+                   <option value="0">Plan to Play</option>
+                   <option value="1">Playing</option>
+                   <option value="2">Completed</option>
+                   <option value="3">Dropped</option>
+                 </select>
+               </div>
+               </div>
+             ) : (
+               <button
+                 className="addDetailBtn"
+                 onClick={handleAddFromModal}
+                 title="Add to your list"
+               >
+                 +
+               </button>
+             )}
             <div className="modalHeader">
               {details?.image && (
                 <img
