@@ -418,26 +418,26 @@ async function removeGameFromList(username, gameName) {
     return result.result;
 }
 
-
 // ------------------
 // Add a game to the user's list
 // ------------------
-async function addGameToList(username, gameName, image, slug, status = 0) {
+async function addGameToList(username, gameName, status = 0, image = "", slug = "") {
     const user = await getUserByUsername(username);
     if (!user) {
             console.error(`User "${username}" not found`);
             return null;
         }
     user.list = user.list || [];
-    if (user.list.some(entry => entry.game === gameName)) {
+    // check the consistent property name 'gameName'
+    if (user.list.some(entry => entry.gameName === gameName)) {
         return { error: "GAME_ALREADY_EXISTS" };
     }
     user.list.push({
-  game: gameName,
-  status: status,
-  image: image,
-  slug: slug
-});
+      gameName: gameName,
+      status: Number(status),
+      image: image,
+      slug: slug
+    });
 
     const result = await retrySystemInstance.execute(() =>
         client.putDocument({
@@ -461,12 +461,12 @@ async function updateGameStatus(username, gameName, newStatus) {
         }
 
     user.list = user.list || [];
-    const game = user.list.find(entry => entry.gameName === gameName);
+    const game = user.list.find(entry => entry.gameName === gameName || entry.game === gameName || entry.slug === gameName);
     if (!game) {
-        console.error(`Game "${game}" not found`);
+        console.error(`Game "${gameName}" not found`);
         return null;
     }
-    game.status = newStatus;
+    game.status = Number(newStatus);
     const result = await retrySystemInstance.execute(() =>
         client.putDocument({
             db: USERS_DB,

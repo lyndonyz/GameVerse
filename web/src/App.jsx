@@ -424,26 +424,39 @@ function App() {
     }
   }
 
-  function handleAddFromModal() {
+  const handleAddFromModal = () => {
     if (!selected) return;
     handleAddToList(selected);
   }
 
-  async function handleStatusChange(gameName, newStatus) {
+  const handleStatusChange = async (gameOrName, newStatus) => {
     try {
+      // Normalize input: allow passing either the game object or the name/slug string
+      const gameObj =
+        typeof gameOrName === "object" && gameOrName !== null
+          ? gameOrName
+          : { name: gameOrName };
+      const name = gameObj.name || gameObj.gameName || "";
+      const slug = gameObj.slug || gameObj.id || "";
+
       await fetch(`${API_BASE_URL}/auth/updateGameStatus`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: user.username,
-          gameName,
-          newStatus: Number(newStatus)
-        })
+          // send both to be safe: backend can use whichever it expects
+          gameName: name || undefined,
+          newStatus: Number(newStatus),
+          slug: slug || undefined,
+        }),
       });
 
       setGameStatus(Number(newStatus));
       // update local in-memory map so dropdown displays correct value
-      setUserGames((prev) => ({ ...prev, [normalizeName(gameName)]: Number(newStatus) }));
+      const keyForMap = normalizeName(name) || normalizeName(slug);
+      if (keyForMap) {
+        setUserGames((prev) => ({ ...prev, [keyForMap]: Number(newStatus) }));
+      }
     } catch (err) {
       console.error("STATUS UPDATE ERROR:", err);
       alert("Failed to update status.");
@@ -666,7 +679,7 @@ function App() {
                         <select
                           value={userGames[key]}
                           onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => handleStatusChange(name, e.target.value)}
+                          onChange={(e) => handleStatusChange(g, e.target.value)}
                           title="Change status"
                         >
                           <option value="0">Plan to Play</option>
@@ -812,7 +825,7 @@ function App() {
                <div className="modalStatus">
                  <select
                    value={userGames[normalizeName(selected.name)]}
-                   onChange={(e) => handleStatusChange(selected.name, e.target.value)}
+                   onChange={(e) => handleStatusChange(selected, e.target.value)}
                  >
                    <option value="0">Plan to Play</option>
                    <option value="1">Playing</option>

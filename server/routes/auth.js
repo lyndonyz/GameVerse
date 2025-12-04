@@ -170,9 +170,9 @@ router.post("/addGameToList", async (req, res) => {
   const result = await addGameToList(
   username,
   gameName,
+  status ?? 0,
   image,
-  slug,
-  status ?? 0
+  slug
 );
 
   if (result && result.error) {
