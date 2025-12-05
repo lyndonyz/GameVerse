@@ -39,11 +39,11 @@ Once done, you should be able to run the web application locally using:
 ```npm run dev```
 
 # Notes on How our Code is Ran/Managed.
-It's running **Vite** + **React** + **Express**.
-<br>User and Comment Databases are ran remotely via **IBM Cloud Databses**.
-<br>The service registry is controlled by our Admin account, which enables us to manually turn on/off microservices.
-<br>Our User passwords are encrypted by **bcrypt**.
-<br>Both our backend and frontend are ran on **IBM Cloud** and deployed using both **Docker** and **IBM Cloud CE**.
++It's running **Vite** + **React** + **Express**.
++User and Comment Databases are ran remotely via **IBM Cloud Databses**.
++The service registry is controlled by our Admin account, which enables us to manually turn on/off microservices.
++Our User passwords are encrypted by **bcrypt**.
++Both our backend and frontend are ran on **IBM Cloud** and deployed using both **Docker** and **IBM Cloud CE**.
 
 # How to Push and Pull GameVerse Repo:
 ## Using Visual Studio Code to Push Stuff
@@ -65,3 +65,5 @@ Message in the group chat if we are working on a specific file etc.
 
 I can't remember exactly how it works, but it should tell you when theres something to pull when in the branch tab. If not, before you do something on a file, make sure that you click the pull button (the solid arrow pointing to a circle) as well as the refresh button.
 <br>
+<br>Thanks for everything team, it was a difficult project to keep ahead in, but we pushed through.
+<br>Lyndon
