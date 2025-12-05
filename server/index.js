@@ -183,53 +183,207 @@ app.get("/api/advancedSearch", async (req, res) => {
     releasedFrom = "",
     releasedTo = "",
     page = 1,
-    page_size = 24,
+    page_size = 10,
   } = req.query;
 
-  let url =
-    `https://api.rawg.io/api/games?key=${apiKey}&page=${page}&page_size=${page_size}`;
+  const requestedPageSize = Number(page_size);
+  const requestedPage = Number(page);
 
-  if (q) url += `&search=${encodeURIComponent(q)}`;
-  if (genre) url += `&genres=${genre}`;
-  if (platform) url += `&platforms=${platform}`;
-  if (minRating) url += `&metacritic=${minRating},100`;
+  // Build base URL with all API-supported filters
+  let baseUrl = `https://api.rawg.io/api/games?key=${apiKey}`;
+  if (q) baseUrl += `&search=${encodeURIComponent(q)}`;
+  if (genre) baseUrl += `&genres=${genre}`;
+  if (platform) baseUrl += `&platforms=${platform}`;
+  if (minRating) baseUrl += `&metacritic=${minRating},100`;
   if (releasedFrom || releasedTo)
-    url += `&dates=${releasedFrom || "1900-01-01"},${releasedTo || "2050-01-01"}`;
+    baseUrl += `&dates=${releasedFrom || "1900-01-01"},${releasedTo || "2050-01-01"}`;
+  baseUrl += `&ordering=-added`;
 
-  url += `&ordering=-added`;
+  const hasClientSideFilters = vr === "yes" || vr === "no";
 
   try {
-    const json = await retryFetch(url);
+    let filteredResults = [];
+    let apiPage = 1;
+    let hasMorePages = true;
+    const maxApiPages = 10; // Safety limit to prevent infinite loops
 
-    const results = (json.results || []).map((g) => ({
-      id: g.id,
-      name: g.name,
-      image: g.background_image,
-      rating: g.rating,
-      released: g.released,
-      raw: g,
-    }));
+    // Calculate starting API page based on requested page
+    // We need to track how many filtered results we've seen to know where to start
+    const targetSkip = (requestedPage - 1) * requestedPageSize;
+    let totalFiltered = 0;
+    let skippedCount = 0;
 
-    const final =
-      vr === "yes"
-        ? results.filter((r) => {
-            const name = r.raw.name.toLowerCase();
-            const tags = r.raw.tags?.map((t) => t.name.toLowerCase()) || [];
-            return (
-              name.includes("vr") ||
-              tags.some((t) => t.includes("vr") || t.includes("virtual"))
-            );
-          })
-        : results;
+    // Keep fetching until we have enough filtered results for the requested page
+    while (filteredResults.length < requestedPageSize && hasMorePages && apiPage <= maxApiPages) {
+      const url = `${baseUrl}&page=${apiPage}&page_size=40`; // Fetch more per request
+      const json = await retryFetch(url);
+
+      if (!json.results || json.results.length === 0) {
+        hasMorePages = false;
+        break;
+      }
+
+      // Map results
+      let pageResults = json.results.map((g) => ({
+        id: g.id,
+        name: g.name,
+        image: g.background_image,
+        rating: g.rating,
+        released: g.released,
+        raw: g,
+      }));
+
+      // Apply client-side filters
+      if (hasClientSideFilters) {
+        const checkVRSupport = (gameData) => {
+          const name = gameData.name?.toLowerCase() || "";
+          const tags = gameData.tags?.map((t) => t.name?.toLowerCase() || "") || [];
+          const tagSlugs = gameData.tags?.map((t) => t.slug?.toLowerCase() || "") || [];
+          const platforms = gameData.platforms?.map((p) => p.platform?.name?.toLowerCase() || "") || [];
+          const platformSlugs = gameData.platforms?.map((p) => p.platform?.slug?.toLowerCase() || "") || [];
+          const stores = gameData.stores?.map((s) => s.store?.name?.toLowerCase() || "") || [];
+          
+          // Enhanced VR keywords for name/text checking
+          const vrKeywords = [
+            "vr", 
+            "virtual reality", 
+            "oculus", 
+            "vive", 
+            "valve index",
+            "playstation vr",
+            "psvr",
+            "meta quest",
+            "quest 2",
+            "quest 3",
+            "htc vive",
+            "mixed reality",
+            "windows mixed reality",
+            "steamvr"
+          ];
+          
+          // VR-specific tag slugs that indicate VR support
+          const vrTagSlugs = [
+            "vr",
+            "virtual-reality",
+            "htc-vive",
+            "oculus-rift",
+            "valve-index",
+            "windows-mixed-reality",
+            "playstation-vr",
+            "oculus-quest"
+          ];
+          
+          // VR platform slugs
+          const vrPlatformSlugs = [
+            "oculus-quest",
+            "oculus-quest-2", 
+            "meta-quest-2",
+            "playstation-vr",
+            "playstation-vr2",
+            "ps-vr",
+            "psvr",
+            "htc-vive",
+            "valve-index",
+            "oculus-rift"
+          ];
+          
+          // Check name (most reliable)
+          if (vrKeywords.some(k => name.includes(k))) {
+            return true;
+          }
+          
+          // Check tag slugs (very reliable)
+          if (tagSlugs.some(slug => vrTagSlugs.includes(slug))) {
+            return true;
+          }
+          
+          // Check tags by name
+          if (tags.some(t => 
+            vrKeywords.some(k => t.includes(k)) || 
+            t === "vr" || 
+            t.startsWith("vr ") ||
+            t.startsWith("vr-") ||
+            t.endsWith(" vr") ||
+            t.endsWith("-vr")
+          )) {
+            return true;
+          }
+          
+          // Check platform slugs
+          if (platformSlugs.some(slug => vrPlatformSlugs.includes(slug))) {
+            return true;
+          }
+          
+          // Check platforms by name
+          if (platforms.some(p => 
+            vrKeywords.some(k => p.includes(k)) ||
+            p.includes("quest") ||
+            p.includes("rift") ||
+            p.includes("vive") ||
+            p.includes("psvr")
+          )) {
+            return true;
+          }
+          
+          // Check stores for VR-specific stores
+          if (stores.some(s => 
+            s.includes("oculus") ||
+            s.includes("vive") ||
+            s.includes("playstation vr")
+          )) {
+            return true;
+          }
+          
+          return false;
+        };
+        
+        if (vr === "yes") {
+          pageResults = pageResults.filter((r) => checkVRSupport(r.raw));
+        } else if (vr === "no") {
+          pageResults = pageResults.filter((r) => !checkVRSupport(r.raw));
+        }
+      }
+
+      // Skip results until we reach the target page
+      for (const result of pageResults) {
+        if (skippedCount < targetSkip) {
+          skippedCount++;
+          continue;
+        }
+        
+        if (filteredResults.length < requestedPageSize) {
+          filteredResults.push(result);
+        } else {
+          break;
+        }
+      }
+
+      hasMorePages = Boolean(json.next);
+      apiPage++;
+
+      // If we have enough results, stop fetching
+      if (filteredResults.length >= requestedPageSize) {
+        break;
+      }
+    }
+
+    // Clean up results (remove raw data)
+    const finalResults = filteredResults.map(({ raw, ...rest }) => rest);
+
+    // Determine if there are more results
+    // We have next if: we hit the page limit with full results, or we stopped early because we got enough
+    const hasNext = filteredResults.length === requestedPageSize && hasMorePages;
+    const hasPrev = requestedPage > 1;
 
     res.json({
-      results: final,
-      hasNext: Boolean(json.next),
-      hasPrev: Boolean(json.previous),
-      page: Number(page),
+      results: finalResults,
+      hasNext,
+      hasPrev,
+      page: requestedPage,
+      pageSize: requestedPageSize,
     });
   } catch (e) {
-    console.error(e);
+    console.error("Advanced search error:", e);
     res.status(500).json({ error: "Advanced search failed" });
   }
 });
@@ -258,17 +412,89 @@ app.get("/api/game/:id", async (req, res) => {
       publishers: g.publishers?.map((p) => p.name) || [],
     };
 
-    const vrKeywords = ["vr", "virtual reality", "vive", "oculus", "valve index"];
+    // Enhanced VR detection matching the filter logic
+    const vrKeywords = [
+      "vr", 
+      "virtual reality", 
+      "oculus", 
+      "vive", 
+      "valve index",
+      "playstation vr",
+      "psvr",
+      "meta quest",
+      "quest 2",
+      "quest 3",
+      "htc vive",
+      "mixed reality",
+      "windows mixed reality",
+      "rift",
+      "steamvr"
+    ];
+    
+    const vrTagSlugs = [
+      "vr",
+      "virtual-reality",
+      "htc-vive",
+      "oculus-rift",
+      "valve-index",
+      "windows-mixed-reality",
+      "playstation-vr",
+      "oculus-quest"
+    ];
+    
+    const vrPlatformSlugs = [
+      "oculus-quest",
+      "oculus-quest-2", 
+      "meta-quest-2",
+      "playstation-vr",
+      "playstation-vr2",
+      "ps-vr",
+      "psvr",
+      "htc-vive",
+      "valve-index",
+      "oculus-rift"
+    ];
+    
+    const name = g.name?.toLowerCase() || "";
+    const desc = g.description_raw?.toLowerCase() || "";
+    const tags = g.tags?.map((t) => t.name?.toLowerCase() || "") || [];
+    const tagSlugs = g.tags?.map((t) => t.slug?.toLowerCase() || "") || [];
+    const platforms = g.platforms?.map((p) => p.platform?.name?.toLowerCase() || "") || [];
+    const platformSlugs = g.platforms?.map((p) => p.platform?.slug?.toLowerCase() || "") || [];
+    const stores = g.stores?.map((s) => s.store?.name?.toLowerCase() || "") || [];
+    
     const vr_supported =
-      g.tags?.some((t) =>
-        vrKeywords.some((k) => t.name?.toLowerCase().includes(k))
+      // Check name
+      vrKeywords.some((k) => name.includes(k)) ||
+      // Check tag slugs
+      tagSlugs.some(slug => vrTagSlugs.includes(slug)) ||
+      // Check tags by name
+      tags.some((t) => 
+        vrKeywords.some((k) => t.includes(k)) || 
+        t === "vr" || 
+        t.startsWith("vr ") ||
+        t.startsWith("vr-") ||
+        t.endsWith(" vr") ||
+        t.endsWith("-vr")
       ) ||
-      g.platforms?.some((p) =>
-        vrKeywords.some((k) =>
-          p.platform?.name?.toLowerCase().includes(k)
-        )
+      // Check platform slugs
+      platformSlugs.some(slug => vrPlatformSlugs.includes(slug)) ||
+      // Check platforms by name
+      platforms.some((p) => 
+        vrKeywords.some((k) => p.includes(k)) ||
+        p.includes("quest") ||
+        p.includes("rift") ||
+        p.includes("vive") ||
+        p.includes("psvr")
       ) ||
-      vrKeywords.some((k) => g.name.toLowerCase().includes(k));
+      // Check stores
+      stores.some(s => 
+        s.includes("oculus") ||
+        s.includes("vive") ||
+        s.includes("playstation vr")
+      ) ||
+      // Check description
+      vrKeywords.some((k) => desc.includes(k));
 
     details.vr_supported = vr_supported ? "Yes" : "No";
 

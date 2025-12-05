@@ -172,7 +172,7 @@ function App() {
   };
 
   // advanced search updated for multi-select platforms
-  const runAdvancedSearch = async () => {
+  const runAdvancedSearch = async (targetPage = 1) => {
     setLoading(true);
     setErr("");
     const params = new URLSearchParams({
@@ -184,7 +184,7 @@ function App() {
       releasedFrom,
       releasedTo,
       sortOrder,
-      page: 1,
+      page: targetPage,
       page_size: 10,
     });
     try {
@@ -308,7 +308,7 @@ function App() {
       releasedTo ||
       sortOrder
     )
-      return runAdvancedSearch();
+      return runAdvancedSearch(1);
     if (!q.trim())
       return cat ? loadByCategory({ page: 1 }) : loadDiscover({ page: 1 });
     runSearch({ page: 1 });
@@ -611,7 +611,7 @@ function App() {
                       key={v}
                       type="button"
                       className={`vrBtn ${vr === v ? "active" : ""}`}
-                      onClick={() => setVr(v)}
+                      onClick={() => setVr(vr === v ? "" : v)}
                     >
                       {v.toUpperCase()}
                     </button>
