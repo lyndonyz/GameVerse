@@ -52,16 +52,13 @@ function Dashboard() {
           body: JSON.stringify({ username: user.username }),
         });
         const data = await r.json();
-        const items = Array.isArray(data.list) ? data.list : data.games || data.items || [];
+        const items = Array.isArray(data.list)
+          ? data.list
+          : data.games || data.items || [];
         const map = {};
         (items || []).forEach((it) => {
           const name =
-            it.gameName ||
-            it.game ||
-            it.name ||
-            it.title ||
-            it.slug ||
-            "";
+            it.gameName || it.game || it.name || it.title || it.slug || "";
           const status = Number(it.status ?? 0);
           const key = normalizeName(name);
           if (key) map[key] = status;
@@ -114,14 +111,32 @@ function Dashboard() {
         const userComments = all.filter((c) => {
           const uname = String(user.username || "").toLowerCase();
           const uid = String(user.id || user._id || "").toLowerCase();
-          const cu = (c.username || c.user || c.author || c.userId || c.user_id || "").toString().toLowerCase();
-          const cemail = (c.email || c.userEmail || "").toString().toLowerCase();
+          const cu = (
+            c.username ||
+            c.user ||
+            c.author ||
+            c.userId ||
+            c.user_id ||
+            ""
+          )
+            .toString()
+            .toLowerCase();
+          const cemail = (c.email || c.userEmail || "")
+            .toString()
+            .toLowerCase();
           if (!cu && !cemail && !c._id) return false;
           if (cu && (cu === uname || cu === uid)) return true;
-          if (cemail && user.email && cemail === String(user.email).toLowerCase()) return true;
+          if (
+            cemail &&
+            user.email &&
+            cemail === String(user.email).toLowerCase()
+          )
+            return true;
           if (c.user && typeof c.user === "object") {
-            if (String(c.user.username || "").toLowerCase() === uname) return true;
-            if (String(c.user.id || c.user._id || "").toLowerCase() === uid) return true;
+            if (String(c.user.username || "").toLowerCase() === uname)
+              return true;
+            if (String(c.user.id || c.user._id || "").toLowerCase() === uid)
+              return true;
           }
           return false;
         });
@@ -182,13 +197,19 @@ function Dashboard() {
       const uniqueById = (arr) => {
         const seen = new Set();
         return arr.filter((it) => {
-          const k = (it.id || it.slug || it.name || JSON.stringify(it)).toString();
+          const k = (
+            it.id ||
+            it.slug ||
+            it.name ||
+            JSON.stringify(it)
+          ).toString();
           if (seen.has(k)) return false;
           seen.add(k);
           return true;
         });
       };
-      const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const randInt = (min, max) =>
+        Math.floor(Math.random() * (max - min + 1)) + min;
       const randChoice = (a) => a[Math.floor(Math.random() * a.length)];
       let pool = [];
 
@@ -202,32 +223,56 @@ function Dashboard() {
       };
 
       try {
-        const orderings = ["", "rating", "-rating", "released", "-released", "name", "-name"];
+        const orderings = [
+          "",
+          "rating",
+          "-rating",
+          "released",
+          "-released",
+          "name",
+          "-name",
+        ];
         const pagesToTry = [randInt(1, 6), randInt(1, 8), randInt(1, 12)];
         await Promise.all(
           pagesToTry.map(async (pg) => {
             const pageSize = 100;
             const ordering = randChoice(orderings);
-            const url = `/api/discover?page=${pg}&page_size=${pageSize}${ordering ? `&ordering=${ordering}` : ""}`;
+            const url = `/api/discover?page=${pg}&page_size=${pageSize}${
+              ordering ? `&ordering=${ordering}` : ""
+            }`;
             try {
               const r = await fetch(url);
               if (r.ok) mergeResults(await r.json());
-            } catch (e) {
-            }
+            } catch (e) {}
           })
         );
       } catch (e) {
         console.warn("discover sweep failed", e);
       }
       try {
-        const terms = ["game", "adventure", "action", "puzzle", "rpg", "indie", "multiplayer", "strategy", "racing", "platformer"];
+        const terms = [
+          "game",
+          "adventure",
+          "action",
+          "puzzle",
+          "rpg",
+          "indie",
+          "multiplayer",
+          "strategy",
+          "racing",
+          "platformer",
+        ];
         const sampleTerms = Array.from({ length: 4 }, () => randChoice(terms));
         const searchPromises = sampleTerms.map((t) => {
           const page = randInt(1, 6);
           const pageSize = 40;
           const year = randInt(1990, new Date().getFullYear());
-          const url = `/api/search?q=${encodeURIComponent(t)}&page=${page}&page_size=${pageSize}&releasedFrom=${year}-01-01&releasedTo=${year}-12-31`;
-          return fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+          const url = `/api/search?q=${encodeURIComponent(
+            t
+          )}&page=${page}&page_size=${pageSize}&releasedFrom=${year}-01-01&releasedTo=${year}-12-31`;
+          return fetch(url)
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null);
         });
         const settled = await Promise.all(searchPromises);
         for (const s of settled) if (s) mergeResults(s);
@@ -239,13 +284,24 @@ function Dashboard() {
         try {
           const RAWG_KEY = process.env.REACT_APP_RAWG_API_KEY || "";
           if (RAWG_KEY) {
-            const metaRes = await fetch(`https://api.rawg.io/api/games?key=${encodeURIComponent(RAWG_KEY)}&page_size=1`);
+            const metaRes = await fetch(
+              `https://api.rawg.io/api/games?key=${encodeURIComponent(
+                RAWG_KEY
+              )}&page_size=1`
+            );
             if (metaRes.ok) {
               const meta = await metaRes.json();
               const total = Number(meta.count || 0) || 1000;
               const pageSize = 20;
-              const page = randInt(1, Math.min(Math.ceil(total / pageSize), 500));
-              const res = await fetch(`https://api.rawg.io/api/games?key=${encodeURIComponent(RAWG_KEY)}&page_size=${pageSize}&page=${page}`);
+              const page = randInt(
+                1,
+                Math.min(Math.ceil(total / pageSize), 500)
+              );
+              const res = await fetch(
+                `https://api.rawg.io/api/games?key=${encodeURIComponent(
+                  RAWG_KEY
+                )}&page_size=${pageSize}&page=${page}`
+              );
               if (res.ok) {
                 const d = await res.json();
                 mergeResults(d);
@@ -258,7 +314,13 @@ function Dashboard() {
       }
 
       pool = uniqueById(pool).map((g) => {
-        const name = (g.name || g.title || g.gameName || g.slug || "").toString();
+        const name = (
+          g.name ||
+          g.title ||
+          g.gameName ||
+          g.slug ||
+          ""
+        ).toString();
         const nid = (g.id || g.slug || name).toString();
         return { ...g, _normName: name.trim().toLowerCase(), _nid: nid };
       });
@@ -279,22 +341,28 @@ function Dashboard() {
         (g) => g,
       ];
       const modified = pool
-        .map((g) => (Math.random() < 0.45 ? modifiers[Math.floor(Math.random() * modifiers.length)](g) : g))
+        .map((g) =>
+          Math.random() < 0.45
+            ? modifiers[Math.floor(Math.random() * modifiers.length)](g)
+            : g
+        )
         .filter(Boolean);
 
       shuffle(modified);
       let picks = modified.slice(0, 5);
 
       if (picks.length < 5) {
-        const relaxed = uniqueById(
-          (pool.concat(modified)).filter(Boolean)
-        ).slice(0, 8);
+        const relaxed = uniqueById(pool.concat(modified).filter(Boolean)).slice(
+          0,
+          8
+        );
         shuffle(relaxed);
         picks = relaxed.slice(0, 5);
       }
 
       for (const p of picks) {
-        const idKey = p._nid || p._normName || (p.id || p.slug || p.name || "").toString();
+        const idKey =
+          p._nid || p._normName || (p.id || p.slug || p.name || "").toString();
         if (!recentShownRef.current.has(idKey)) {
           recentShownRef.current.add(idKey);
           recentQueueRef.current.push(idKey);
@@ -326,7 +394,12 @@ function Dashboard() {
     }
 
     const name = game.name || game.gameName || game.title || game.slug || "";
-    const image = game.image || game.background_image || game.backgroundImage || game.image_url || "";
+    const image =
+      game.image ||
+      game.background_image ||
+      game.backgroundImage ||
+      game.image_url ||
+      "";
     const slug = game.slug || game.id || "";
 
     try {
@@ -338,8 +411,8 @@ function Dashboard() {
           gameName: name,
           image,
           slug,
-          status: 0
-        })
+          status: 0,
+        }),
       });
 
       const data = await r.json();
@@ -353,7 +426,7 @@ function Dashboard() {
         return;
       }
 
-      // update local map and stats 
+      // update local map and stats
       setUserGames((prev) => {
         const key = normalizeName(name);
         if (prev[key] != null) return prev;
@@ -398,7 +471,11 @@ function Dashboard() {
         // update counts
         setCounts((countsPrev) => {
           const c = Array.isArray(countsPrev) ? [...countsPrev] : [0, 0, 0, 0];
-          if (typeof prevStatus === "number" && prevStatus >= 0 && prevStatus <= 3) {
+          if (
+            typeof prevStatus === "number" &&
+            prevStatus >= 0 &&
+            prevStatus <= 3
+          ) {
             c[prevStatus] = Math.max(0, (c[prevStatus] || 0) - 1);
           }
           if (parsedNew >= 0 && parsedNew <= 3) {
@@ -418,7 +495,9 @@ function Dashboard() {
   // delete comment handler
   async function handleDeleteComment(id) {
     if (!id) return;
-    const ok = window.confirm("Delete this comment? This action cannot be undone.");
+    const ok = window.confirm(
+      "Delete this comment? This action cannot be undone."
+    );
     if (!ok) return;
     try {
       const res = await fetch(`${API_BASE_URL}/auth/deleteComment`, {
@@ -429,7 +508,12 @@ function Dashboard() {
 
       if (!res.ok) {
         const text = await res.text().catch(() => "<no body>");
-        console.error("deleteComment bad response", res.status, res.statusText, text);
+        console.error(
+          "deleteComment bad response",
+          res.status,
+          res.statusText,
+          text
+        );
         alert(`Delete failed: ${res.status} ${res.statusText}\n${text}`);
         return;
       }
@@ -437,7 +521,10 @@ function Dashboard() {
       const payload = await res.json().catch(() => null);
       if (!payload || payload.success === false) {
         console.error("deleteComment payload error", payload);
-        alert("Failed to delete comment: " + (payload?.error || payload?.message || "unknown"));
+        alert(
+          "Failed to delete comment: " +
+            (payload?.error || payload?.message || "unknown")
+        );
         return;
       }
       setComments((prev) => prev.filter((c) => String(c.id) !== String(id)));
@@ -476,10 +563,22 @@ function Dashboard() {
     <div className="no-comments">You haven't posted any comments yet.</div>
   ) : (
     comments.map((c) => (
-      <div key={c.id || `${c.createdAtRaw || ""}-${Math.random()}`} className="comment-box">
-        <div className="comment-meta" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div
+        key={c.id || `${c.createdAtRaw || ""}-${Math.random()}`}
+        className="comment-box"
+      >
+        <div
+          className="comment-meta"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <div className="comment-date">
-            {c.createdAtTs ? new Date(c.createdAtTs).toLocaleString() : c.createdAtRaw || ""}
+            {c.createdAtTs
+              ? new Date(c.createdAtTs).toLocaleString()
+              : c.createdAtRaw || ""}
           </div>
           <button
             onClick={() => handleDeleteComment(c.id)}
@@ -528,23 +627,42 @@ function Dashboard() {
                 <h2>Your Dashboard, {user?.username}</h2>
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                   <div style={{ fontWeight: 700 }}>
-                    Total games: <span style={{ color: "var(--primary)" }}>{total}</span>
+                    Total games:{" "}
+                    <span style={{ color: "var(--primary)" }}>{total}</span>
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "center",
+                  marginBottom: 12,
+                  flexWrap: "wrap",
+                }}
+              >
                 {statusLabels.map((label, i) => (
                   <button
                     key={i}
-                    onClick={() => setSelectedStatus(selectedStatus === i ? null : i)}
-                    className={`statusFilterBtn ${selectedStatus === i ? "active" : ""}`}
+                    onClick={() =>
+                      setSelectedStatus(selectedStatus === i ? null : i)
+                    }
+                    className={`statusFilterBtn ${
+                      selectedStatus === i ? "active" : ""
+                    }`}
                     aria-pressed={selectedStatus === i}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
                   >
                     <span className={`filterDot status-${i}`} />
                     <span style={{ fontWeight: 700 }}>{label}</span>
-                    <span style={{ marginLeft: 6, opacity: 0.9 }}>({counts[i]})</span>
+                    <span style={{ marginLeft: 6, opacity: 0.9 }}>
+                      ({counts[i]})
+                    </span>
                   </button>
                 ))}
               </div>
@@ -559,20 +677,43 @@ function Dashboard() {
                 </div>
 
                 <div className="comments-column">
-                  <div className="comments-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                    <div className="comments-title" style={{ fontWeight: 700 }}>Your comments</div>
-                    <div className="comments-count" style={{ color: "var(--muted)" }}>{comments.length} total</div>
+                  <div
+                    className="comments-header"
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 10,
+                    }}
+                  >
+                    <div className="comments-title" style={{ fontWeight: 700 }}>
+                      Your comments
+                    </div>
+                    <div
+                      className="comments-count"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      {comments.length} total
+                    </div>
                   </div>
 
-                  <div className="comments-scroll">
-                    {commentsContent}
-                  </div>
+                  <div className="comments-scroll">{commentsContent}</div>
                 </div>
               </div>
 
               <div className="random-picks-section" style={{ marginTop: 24 }}>
-                <div className="section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <div className="section-title" style={{ fontWeight: 700 }}>Random Game Picks For You, {user?.username}</div>
+                <div
+                  className="section-header"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <div className="section-title" style={{ fontWeight: 700 }}>
+                    Random Game Picks For You, {user?.username}
+                  </div>
                   <button
                     className="btn btn-sm"
                     onClick={() => fetchRandomPicks()}
@@ -587,15 +728,24 @@ function Dashboard() {
                 {loadingPicks ? (
                   <div className="random-picks-loading">Loading picks…</div>
                 ) : randomPicks.length === 0 ? (
-                  <div className="no-random-picks">No game picks available.</div>
+                  <div className="no-random-picks">
+                    No game picks available.
+                  </div>
                 ) : (
                   <ul className="list">
                     {randomPicks.map((g, idx) => {
-                      const name = g.name || g.title || g.gameName || g.slug || "Untitled";
+                      const name =
+                        g.name || g.title || g.gameName || g.slug || "Untitled";
                       const key = g.id || g.slug || `${name}-${idx}`;
-                      const img = g.image || g.background_image || g.backgroundImage || g.image_url || "";
+                      const img =
+                        g.image ||
+                        g.background_image ||
+                        g.backgroundImage ||
+                        g.image_url ||
+                        "";
                       const rating = g.rating ?? g.score ?? g.rtg ?? null;
-                      const inList = loggedIn && userGames[normalizeName(name)] != null;
+                      const inList =
+                        loggedIn && userGames[normalizeName(name)] != null;
 
                       return (
                         <li key={key} className="row">
@@ -606,7 +756,9 @@ function Dashboard() {
                               <select
                                 value={String(userGames[normalizeName(name)])}
                                 onClick={(e) => e.stopPropagation()}
-                                onChange={(e) => handleStatusChangeFromPick(g, e.target.value)}
+                                onChange={(e) =>
+                                  handleStatusChangeFromPick(g, e.target.value)
+                                }
                                 title="Change status"
                               >
                                 <option value="0">Plan to Play</option>
@@ -625,15 +777,26 @@ function Dashboard() {
                             )}
                           </div>
 
-                          <div className="cover" role="button" tabIndex={0} style={{ cursor: "default" }}>
-                            {img ? <img loading="lazy" src={img} alt={name} /> : <div className="placeholder">No Image</div>}
+                          <div
+                            className="cover"
+                            role="button"
+                            tabIndex={0}
+                            style={{ cursor: "default" }}
+                          >
+                            {img ? (
+                              <img loading="lazy" src={img} alt={name} />
+                            ) : (
+                              <div className="placeholder">No Image</div>
+                            )}
                           </div>
 
                           <div className="meta">
                             <div className="title">{name}</div>
                             <div className="sub">
                               <span className="badge">★ {rating ?? "—"}</span>
-                              <span className="badge">📅 {g.released || g.releaseDate || "—"}</span>
+                              <span className="badge">
+                                📅 {g.released || g.releaseDate || "—"}
+                              </span>
                             </div>
                           </div>
                         </li>
@@ -650,13 +813,23 @@ function Dashboard() {
           {!loggedIn ? null : (
             <>
               <div style={{ marginBottom: 12 }}>
-                <div style={{ color: "var(--muted)", marginBottom: 6 }}>{formattedDate}</div>
-                <div style={{ fontWeight: 700, color: "var(--primary)" }}>{formattedTime}</div>
+                <div style={{ color: "var(--muted)", marginBottom: 6 }}>
+                  {formattedDate}
+                </div>
+                <div style={{ fontWeight: 700, color: "var(--primary)" }}>
+                  {formattedTime}
+                </div>
               </div>
 
               <div style={{ marginTop: 12 }}>
-                <Calendar onChange={setCalendarValue} value={calendarValue} locale="en-US" />
-                <div style={{ marginTop: 8, color: "var(--muted)" }}>Selected: {calendarValue.toLocaleDateString()}</div>
+                <Calendar
+                  onChange={setCalendarValue}
+                  value={calendarValue}
+                  locale="en-US"
+                />
+                <div style={{ marginTop: 8, color: "var(--muted)" }}>
+                  Selected: {calendarValue.toLocaleDateString()}
+                </div>
               </div>
             </>
           )}
@@ -664,26 +837,54 @@ function Dashboard() {
       </main>
 
       <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
-        <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
+        <button className="drawerClose" onClick={() => setMenuOpen(false)}>
+          ✕
+        </button>
         <nav className="drawerMenu">
-          <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
-          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-          <Link to="/yourlist" onClick={() => setMenuOpen(false)}>Your List</Link>
-          <Link to="/settings" onClick={() => setMenuOpen(false)}>Settings</Link>
+          <Link to="/" onClick={() => setMenuOpen(false)}>
+            Home
+          </Link>
+          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
+            Dashboard
+          </Link>
+          <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
+            Your List
+          </Link>
+          <Link to="/settings" onClick={() => setMenuOpen(false)}>
+            Settings
+          </Link>
         </nav>
         <div className="drawerAuthFooter">
           {!loggedIn ? (
-            <Link to="/login" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>Log In</Link>
+            <Link
+              to="/login"
+              className="drawerLoginBtn"
+              onClick={() => setMenuOpen(false)}
+            >
+              Log In
+            </Link>
           ) : (
             <div className="drawerUserBlock">
-              <p>Logged in as <b>{user?.username}</b></p>
-              <button className="drawerLogoutBtn" onClick={() => { logout(); setMenuOpen(false); }}>Log Out</button>
+              <p>
+                Logged in as <b>{user?.username}</b>
+              </p>
+              <button
+                className="drawerLogoutBtn"
+                onClick={() => {
+                  logout();
+                  setMenuOpen(false);
+                }}
+              >
+                Log Out
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && (
+        <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />
+      )}
     </div>
   );
 }

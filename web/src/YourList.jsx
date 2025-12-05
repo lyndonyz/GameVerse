@@ -29,7 +29,9 @@ function YourList() {
 
     const prev = games;
     // optimistically remove from UI
-    setGames((g) => g.filter((item) => (item.gameName || item.name || item.slug) !== name));
+    setGames((g) =>
+      g.filter((item) => (item.gameName || item.name || item.slug) !== name)
+    );
 
     try {
       const res = await fetch(`${API_BASE_URL}/auth/removeGameFromList`, {
@@ -49,7 +51,6 @@ function YourList() {
       setTimeout(() => {
         loadList();
       }, 1000);
-
     } catch (err) {
       console.error("removeGameFromList network error", err);
       setGames(prev);
@@ -67,7 +68,8 @@ function YourList() {
       const chunk = savedList.slice(i, i + CONCURRENCY);
       const promises = chunk.map(async (item) => {
         const query = item.slug || item.gameName || "";
-        if (!query) return { ...item, image: item.image || "", id: item.id || null };
+        if (!query)
+          return { ...item, image: item.image || "", id: item.id || null };
         try {
           const r = await fetch(
             `/api/search?q=${encodeURIComponent(query)}&page=1&page_size=3`
@@ -77,21 +79,36 @@ function YourList() {
           const targetSlug = norm(item.slug);
           const targetName = norm(item.gameName);
           const match =
-            siteResults.find((res) => targetSlug && norm(res.slug) === targetSlug) ||
-            siteResults.find((res) => targetName && norm(res.name) === targetName) ||
+            siteResults.find(
+              (res) => targetSlug && norm(res.slug) === targetSlug
+            ) ||
+            siteResults.find(
+              (res) => targetName && norm(res.name) === targetName
+            ) ||
             siteResults[0] ||
             null;
           return {
             ...item,
             id: item.id || (match ? match.id : null),
-            image: item.image || (match ? match.image || match.background_image : "") || "",
+            image:
+              item.image ||
+              (match ? match.image || match.background_image : "") ||
+              "",
             slug: item.slug || (match ? match.slug : ""),
             gameName: item.gameName || (match ? match.name : "") || "",
-            status: typeof item.status === "number" ? item.status : Number(item.status || 0),
+            status:
+              typeof item.status === "number"
+                ? item.status
+                : Number(item.status || 0),
           };
         } catch (err) {
           console.error("Enrich lookup failed for", query, err);
-          return { ...item, image: item.image || "", id: item.id || null, status: Number(item.status || 0) };
+          return {
+            ...item,
+            image: item.image || "",
+            id: item.id || null,
+            status: Number(item.status || 0),
+          };
         }
       });
       const chunkRes = await Promise.all(promises);
@@ -114,7 +131,7 @@ function YourList() {
       const r = await fetch(`${API_BASE_URL}/auth/getAllGames`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: user.username })
+        body: JSON.stringify({ username: user.username }),
       });
 
       const data = await r.json();
@@ -125,7 +142,10 @@ function YourList() {
           image: item.image || "",
           gameName: item.gameName || item.name || "",
           id: item.id || null,
-          status: typeof item.status === "number" ? item.status : Number(item.status || 0),
+          status:
+            typeof item.status === "number"
+              ? item.status
+              : Number(item.status || 0),
         }));
         setGames(immediate);
         enrichSavedGames(data.list)
@@ -249,7 +269,9 @@ function YourList() {
   return (
     <div className="layout">
       <header className="header">
-        <button className="hamburger" onClick={() => setMenuOpen(true)}>☰</button>
+        <button className="hamburger" onClick={() => setMenuOpen(true)}>
+          ☰
+        </button>
         <div className="brand">GAMEVERSE</div>
       </header>
 
@@ -257,7 +279,9 @@ function YourList() {
         {!loggedIn ? (
           <div className="loginPromptContainer">
             <h1>Please log in to view your games list.</h1>
-            <Link to="/login" className="btn loginPromptBtn">Go to Login</Link>
+            <Link to="/login" className="btn loginPromptBtn">
+              Go to Login
+            </Link>
           </div>
         ) : loading ? (
           <h1>Loading your games...</h1>
@@ -269,7 +293,9 @@ function YourList() {
               {statusLabels.map((label, i) => (
                 <button
                   key={i}
-                  className={`statusFilterBtn ${filterStatus === i ? "active" : ""}`}
+                  className={`statusFilterBtn ${
+                    filterStatus === i ? "active" : ""
+                  }`}
                   onClick={() => setFilterStatus(filterStatus === i ? null : i)}
                   aria-pressed={filterStatus === i}
                 >
@@ -284,7 +310,11 @@ function YourList() {
             ) : (
               <ul className="yourListGrid">
                 {sortedGames.map((g, idx) => (
-                  <li key={idx} className="yourListItem" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <li
+                    key={idx}
+                    className="yourListItem"
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
+                  >
                     <div
                       className="listNumber"
                       style={{
@@ -299,22 +329,48 @@ function YourList() {
                       {idx + 1}
                     </div>
 
-                    <div className={`statusIndicator status-${String(g.status ?? 0)}`} />
+                    <div
+                      className={`statusIndicator status-${String(
+                        g.status ?? 0
+                      )}`}
+                    />
 
-                    <div className="yourListLeft" style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
+                    <div
+                      className="yourListLeft"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        flex: 1,
+                      }}
+                    >
                       <img
                         className="yourListImg"
                         src={g.image || ""}
                         alt={g.gameName || "Game"}
                         loading="lazy"
-                        style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 6 }}
+                        style={{
+                          width: 72,
+                          height: 72,
+                          objectFit: "cover",
+                          borderRadius: 6,
+                        }}
                       />
                       <div>
-                        <h3 className="yourListTitle" style={{ margin: 0 }}>{g.gameName || g.slug || "Unknown"}</h3>
+                        <h3 className="yourListTitle" style={{ margin: 0 }}>
+                          {g.gameName || g.slug || "Unknown"}
+                        </h3>
                       </div>
                     </div>
 
-                    <div className="yourListStatusRight" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                    <div
+                      className="yourListStatusRight"
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                      }}
+                    >
                       <div>
                         <label>Status: </label>
                         <select
@@ -339,7 +395,7 @@ function YourList() {
                       </button>
                     </div>
                   </li>
-                 ))}
+                ))}
               </ul>
             )}
           </>
@@ -347,26 +403,44 @@ function YourList() {
       </main>
 
       <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
-        <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
+        <button className="drawerClose" onClick={() => setMenuOpen(false)}>
+          ✕
+        </button>
         <nav className="drawerMenu">
-          <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
-          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-          <Link to="/yourlist" onClick={() => setMenuOpen(false)}>Your List</Link>
-          <Link to="/settings" onClick={() => setMenuOpen(false)}>Settings</Link>
+          <Link to="/" onClick={() => setMenuOpen(false)}>
+            Home
+          </Link>
+          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
+            Dashboard
+          </Link>
+          <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
+            Your List
+          </Link>
+          <Link to="/settings" onClick={() => setMenuOpen(false)}>
+            Settings
+          </Link>
         </nav>
         <div className="drawerAuthFooter">
           {loggedIn ? (
             <div className="drawerUserBlock">
-              <p>Logged in as <b>{user?.username}</b></p>
-              <button className="drawerLogoutBtn" onClick={logout}>Log Out</button>
+              <p>
+                Logged in as <b>{user?.username}</b>
+              </p>
+              <button className="drawerLogoutBtn" onClick={logout}>
+                Log Out
+              </button>
             </div>
           ) : (
-            <Link to="/login" className="drawerLoginBtn">Log In</Link>
+            <Link to="/login" className="drawerLoginBtn">
+              Log In
+            </Link>
           )}
         </div>
       </div>
 
-      {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && (
+        <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />
+      )}
     </div>
   );
 }

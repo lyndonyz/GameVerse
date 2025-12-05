@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@400;600&display=swap");
 
 :root {
   --bg: #0b0f15;
@@ -18,7 +18,9 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
   margin: 0;
@@ -40,9 +42,8 @@ body {
   padding: 16px;
   width: 100%;
   height: 100%;
-  overflow: auto; 
+  overflow: auto;
 }
-
 
 #root {
   max-width: none;
@@ -53,7 +54,7 @@ body {
 }
 
 .brand {
-  font-family: 'Orbitron', sans-serif;
+  font-family: "Orbitron", sans-serif;
   font-weight: 800;
   font-size: 24px;
   background: linear-gradient(90deg, #ff00d4, #b400f3, #7b00ff);
@@ -89,7 +90,6 @@ body {
   background: linear-gradient(180deg, #ff44e4, #c200ff);
 }
 
-
 .topList {
   list-style: none;
   padding: 0;
@@ -97,7 +97,6 @@ body {
   display: grid;
   gap: 12px;
 }
-
 
 .topRatedItem {
   display: flex;
@@ -116,7 +115,6 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 0 12px rgba(180, 0, 243, 0.4);
 }
-
 
 .topRatedRank {
   font-weight: bold;
@@ -157,17 +155,15 @@ body {
   color: var(--muted);
 }
 
-
 .topRatedItem:hover .topRatedThumb {
   box-shadow: 0 0 10px #b400f3;
 }
 
-
 .glow-link {
   color: white;
   font-weight: bold;
-  font-style: italic; 
-  text-decoration: underline; 
+  font-style: italic;
+  text-decoration: underline;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
   text-decoration-color: #ff00d4;
@@ -180,23 +176,16 @@ body {
   text-decoration-thickness: 2px;
 }
 
-
-
 .glow-image {
   border-radius: 12px;
   transition: transform 0.3s, box-shadow 0.3s;
   transform: scale(1);
-
 }
 
 .glow-image:hover {
   transform: scale(1.03);
   filter: brightness(1.15);
-  
-
 }
-
-
 
 .modal {
   box-shadow: none !important;
@@ -217,55 +206,116 @@ body {
 
 /* ✅ Consistent Glow Color for Image + Title Text */
 .glow-image.glow-red,
-.modalTitle.glow-red      { box-shadow: 0 0 20px 4px #ff3c3c; text-shadow: 0 0 8px #ff3c3c; color: #ffbaba; }
+.modalTitle.glow-red {
+  box-shadow: 0 0 20px 4px #ff3c3c;
+  text-shadow: 0 0 8px #ff3c3c;
+  color: #ffbaba;
+}
 
 .glow-image.glow-blue,
-.modalTitle.glow-blue     { box-shadow: 0 0 20px 4px #3c9dff; text-shadow: 0 0 8px #3c9dff; color: #b3daff; }
+.modalTitle.glow-blue {
+  box-shadow: 0 0 20px 4px #3c9dff;
+  text-shadow: 0 0 8px #3c9dff;
+  color: #b3daff;
+}
 
 .glow-image.glow-green,
-.modalTitle.glow-green    { box-shadow: 0 0 20px 4px #3cff6b; text-shadow: 0 0 8px #3cff6b; color: #b8ffcb; }
+.modalTitle.glow-green {
+  box-shadow: 0 0 20px 4px #3cff6b;
+  text-shadow: 0 0 8px #3cff6b;
+  color: #b8ffcb;
+}
 
 .glow-image.glow-purple,
-.modalTitle.glow-purple   { box-shadow: 0 0 20px 4px #a93cff; text-shadow: 0 0 8px #a93cff; color: #d7b3ff; }
+.modalTitle.glow-purple {
+  box-shadow: 0 0 20px 4px #a93cff;
+  text-shadow: 0 0 8px #a93cff;
+  color: #d7b3ff;
+}
 
 .glow-image.glow-orange,
-.modalTitle.glow-orange   { box-shadow: 0 0 20px 4px #ff993c; text-shadow: 0 0 8px #ff993c; color: #ffd5b0; }
+.modalTitle.glow-orange {
+  box-shadow: 0 0 20px 4px #ff993c;
+  text-shadow: 0 0 8px #ff993c;
+  color: #ffd5b0;
+}
 
 .glow-image.glow-pink,
-.modalTitle.glow-pink     { box-shadow: 0 0 20px 4px #ff3cb5; text-shadow: 0 0 8px #ff3cb5; color: #ffb3e3; }
+.modalTitle.glow-pink {
+  box-shadow: 0 0 20px 4px #ff3cb5;
+  text-shadow: 0 0 8px #ff3cb5;
+  color: #ffb3e3;
+}
 
 .glow-image.glow-yellow,
-.modalTitle.glow-yellow   { box-shadow: 0 0 20px 4px #ffe93c; text-shadow: 0 0 8px #ffe93c; color: #fff7b8; }
+.modalTitle.glow-yellow {
+  box-shadow: 0 0 20px 4px #ffe93c;
+  text-shadow: 0 0 8px #ffe93c;
+  color: #fff7b8;
+}
 
 .glow-image.glow-cyan,
-.modalTitle.glow-cyan     { box-shadow: 0 0 20px 4px #3cffff; text-shadow: 0 0 8px #3cffff; color: #b3ffff; }
+.modalTitle.glow-cyan {
+  box-shadow: 0 0 20px 4px #3cffff;
+  text-shadow: 0 0 8px #3cffff;
+  color: #b3ffff;
+}
 
 .glow-image.glow-teal,
-.modalTitle.glow-teal     { box-shadow: 0 0 20px 4px #3cffd4; text-shadow: 0 0 8px #3cffd4; color: #b3fff0; }
+.modalTitle.glow-teal {
+  box-shadow: 0 0 20px 4px #3cffd4;
+  text-shadow: 0 0 8px #3cffd4;
+  color: #b3fff0;
+}
 
 .glow-image.glow-white,
-.modalTitle.glow-white    { box-shadow: 0 0 20px 4px #ffffff; text-shadow: 0 0 8px #ffffff; color: #ffffff; }
+.modalTitle.glow-white {
+  box-shadow: 0 0 20px 4px #ffffff;
+  text-shadow: 0 0 8px #ffffff;
+  color: #ffffff;
+}
 
 .glow-image.glow-lime,
-.modalTitle.glow-lime     { box-shadow: 0 0 20px 4px #aaff00; text-shadow: 0 0 8px #aaff00; color: #eaff9b; }
+.modalTitle.glow-lime {
+  box-shadow: 0 0 20px 4px #aaff00;
+  text-shadow: 0 0 8px #aaff00;
+  color: #eaff9b;
+}
 
 .glow-image.glow-indigo,
-.modalTitle.glow-indigo   { box-shadow: 0 0 20px 4px #7f3cff; text-shadow: 0 0 8px #7f3cff; color: #c7b3ff; }
+.modalTitle.glow-indigo {
+  box-shadow: 0 0 20px 4px #7f3cff;
+  text-shadow: 0 0 8px #7f3cff;
+  color: #c7b3ff;
+}
 
 .glow-image.glow-magenta,
-.modalTitle.glow-magenta  { box-shadow: 0 0 20px 4px #ff3cff; text-shadow: 0 0 8px #ff3cff; color: #ffb3ff; }
+.modalTitle.glow-magenta {
+  box-shadow: 0 0 20px 4px #ff3cff;
+  text-shadow: 0 0 8px #ff3cff;
+  color: #ffb3ff;
+}
 
 .glow-image.glow-sky,
-.modalTitle.glow-sky      { box-shadow: 0 0 20px 4px #00ccff; text-shadow: 0 0 8px #00ccff; color: #b3ecff; }
+.modalTitle.glow-sky {
+  box-shadow: 0 0 20px 4px #00ccff;
+  text-shadow: 0 0 8px #00ccff;
+  color: #b3ecff;
+}
 
 .glow-image.glow-violet,
-.modalTitle.glow-violet   { box-shadow: 0 0 20px 4px #c43cff; text-shadow: 0 0 8px #c43cff; color: #e0b3ff; }
+.modalTitle.glow-violet {
+  box-shadow: 0 0 20px 4px #c43cff;
+  text-shadow: 0 0 8px #c43cff;
+  color: #e0b3ff;
+}
 
 .glow-image.glow-gold,
-.modalTitle.glow-gold     { box-shadow: 0 0 20px 4px #ffd700; text-shadow: 0 0 8px #ffd700; color: #fff5b3; }
-
-
-
+.modalTitle.glow-gold {
+  box-shadow: 0 0 20px 4px #ffd700;
+  text-shadow: 0 0 8px #ffd700;
+  color: #fff5b3;
+}
 
 .select {
   appearance: none;
@@ -278,7 +328,7 @@ body {
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 14px;
-  font-family: 'Rajdhani', sans-serif;
+  font-family: "Rajdhani", sans-serif;
   transition: all 0.25s ease;
   outline: none;
   cursor: pointer;
@@ -300,6 +350,3 @@ select.select optgroup {
   background-color: var(--panel-3) !important;
   color: var(--text) !important;
 }
-
-
-

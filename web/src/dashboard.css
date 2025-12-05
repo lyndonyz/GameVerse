@@ -7,17 +7,17 @@
 }
 
 .dashboard-left {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .dashboard-right {
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .total-games {
@@ -42,17 +42,17 @@
   gap: 8px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: rgba(255,255,255,0.02);
+  background: rgba(255, 255, 255, 0.02);
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;
 }
 
 .statusFilterBtn.active {
-  background: rgba(255,255,255,0.06);
-  box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
 }
 
 .filterDot {
@@ -62,22 +62,44 @@
   flex-shrink: 0;
 }
 
-.filterDot.status-0 { background: #6b7280; }
-.filterDot.status-1 { background: #16a34a; }
-.filterDot.status-2 { background: #2563eb; }
-.filterDot.status-3 { background: #ef4444; }
+.filterDot.status-0 {
+  background: #6b7280;
+}
+.filterDot.status-1 {
+  background: #16a34a;
+}
+.filterDot.status-2 {
+  background: #2563eb;
+}
+.filterDot.status-3 {
+  background: #ef4444;
+}
 
 .pie-wrap {
   max-width: 420px;
   margin-top: 8px;
 }
 
-.time-block { margin-bottom: 12px; }
-.date-text { color: var(--muted); margin-bottom: 6px; }
-.time-text { font-weight: 700; color: var(--primary); }
+.time-block {
+  margin-bottom: 12px;
+}
+.date-text {
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.time-text {
+  font-weight: 700;
+  color: var(--primary);
+}
 
-.calendar-wrap { margin-top: 8px; }
-.selected-date { margin-top: 8px; color: var(--muted); font-size: 13px; }
+.calendar-wrap {
+  margin-top: 8px;
+}
+.selected-date {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
 
 .dashboard-main-row {
   display: flex;
@@ -99,8 +121,8 @@
 }
 
 .comment-box {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 18px;
   border-radius: 10px;
   min-height: 84px;
@@ -108,7 +130,7 @@
   flex-direction: column;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .comment-meta {
@@ -138,8 +160,8 @@
 .no-comments {
   color: var(--muted);
   padding: 12px;
-  background: rgba(255,255,255,0.02);
-  border: 1px dashed rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.03);
   border-radius: 8px;
 }
 
@@ -165,7 +187,7 @@
 
 .comments-column .comments-header {
   padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   margin-bottom: 12px;
 }
 

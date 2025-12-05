@@ -1,22 +1,22 @@
 .status-message {
-    font-weight: bold;
-    margin-bottom: 20px;
-    text-align: left;
-    padding: 10px;
-    border-radius: 4px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: left;
+  padding: 10px;
+  border-radius: 4px;
 }
 
 .status-message.error {
-    color: var(--red, #ff5555);
-    background-color: rgba(255, 85, 85, 0.1);
+  color: var(--red, #ff5555);
+  background-color: rgba(255, 85, 85, 0.1);
 }
 
 .status-message.success {
-    color: var(--green, #50fa7b);
-    background-color: rgba(80, 250, 123, 0.1);
+  color: var(--green, #50fa7b);
+  background-color: rgba(80, 250, 123, 0.1);
 }
 
 .settingsContentWrapper {
-    max-width: 600px;
-    margin: 0 20px 0 0;
+  max-width: 600px;
+  margin: 0 20px 0 0;
 }

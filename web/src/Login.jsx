@@ -6,39 +6,39 @@ import "./Login.css";
 export default function Login() {
   const navigate = useNavigate();
   const { setLoggedIn, setUser } = useAuth();
-  const API_BASE_URL = "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
+  const API_BASE_URL =
+    "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false); 
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    setError(""); 
+    setError("");
     if (!username.trim() || !password.trim()) {
       setError("Please enter your username/email and password.");
       return;
     }
 
     try {
-      const res = await fetch("http://localhost:8000/auth/login", { 
-    // const res = await fetch(`${API_BASE_URL}/auth/login`, { 
+      const res = await fetch("http://localhost:8000/auth/login", {
+        // const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier: username, password }) 
+        body: JSON.stringify({ identifier: username, password }),
       });
 
       const data = await res.json();
 
       if (data.error) {
-        setError("Invalid username or password!"); 
+        setError("Invalid username or password!");
         return;
       }
       setUser(data.user);
       setLoggedIn(true);
       navigate("/dashboard");
-
     } catch (err) {
       console.error("Login error:", err);
       setError("Server error. Make sure backend is running.");
@@ -46,9 +46,11 @@ export default function Login() {
   };
 
   return (
-    <div className="layout"> 
+    <div className="layout">
       <header className="header">
-        <button className="hamburger" onClick={() => setMenuOpen(true)}>☰</button>
+        <button className="hamburger" onClick={() => setMenuOpen(true)}>
+          ☰
+        </button>
         <div className="brand" role="button" tabIndex={0}>
           GAMEVERSE
         </div>
@@ -81,25 +83,41 @@ export default function Login() {
           {error && <p className="errorText">{error}</p>}
 
           <p className="loginHint">
-            Don't have an account? <Link to="/register">Create one Here!</Link> 
+            Don't have an account? <Link to="/register">Create one Here!</Link>
           </p>
         </div>
       </div>
       <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
-        <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
+        <button className="drawerClose" onClick={() => setMenuOpen(false)}>
+          ✕
+        </button>
         <nav className="drawerMenu">
-        <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
-        <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-        <Link to="/yourlist" onClick={() => setMenuOpen(false)}>Your List</Link>
-        <Link to="/settings" onClick={() => setMenuOpen(false)}>Settings</Link>
+          <Link to="/" onClick={() => setMenuOpen(false)}>
+            Home
+          </Link>
+          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
+            Dashboard
+          </Link>
+          <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
+            Your List
+          </Link>
+          <Link to="/settings" onClick={() => setMenuOpen(false)}>
+            Settings
+          </Link>
         </nav>
-        <div className="drawerAuthFooter"> 
-          <Link to="/register" className="drawerLoginBtn" onClick={() => setMenuOpen(false)}>
-              Create Account
+        <div className="drawerAuthFooter">
+          <Link
+            to="/register"
+            className="drawerLoginBtn"
+            onClick={() => setMenuOpen(false)}
+          >
+            Create Account
           </Link>
         </div>
       </div>
-      {menuOpen && <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && (
+        <div className="drawerOverlay" onClick={() => setMenuOpen(false)} />
+      )}
     </div>
   );
 }

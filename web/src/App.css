@@ -26,10 +26,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  
 }
 
-/* LAYOUT */
 .layout {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -483,19 +481,21 @@ body {
   gap: 8px;
   padding: 6px 10px;
   border-radius: 8px;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   color: #fff;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.04);
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;
 }
 
-.statusFilterBtn:hover { opacity: 0.95; }
+.statusFilterBtn:hover {
+  opacity: 0.95;
+}
 
 .statusFilterBtn.active {
-  background: rgba(255,255,255,0.06);
-  box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 .filterDot {
@@ -505,12 +505,22 @@ body {
   flex-shrink: 0;
 }
 
-.filterDot.status-0 { background: #6b7280; }
-.filterDot.status-1 { background: #16a34a; }
-.filterDot.status-2 { background: #2563eb; }
-.filterDot.status-3 { background: #ef4444; }
+.filterDot.status-0 {
+  background: #6b7280;
+}
+.filterDot.status-1 {
+  background: #16a34a;
+}
+.filterDot.status-2 {
+  background: #2563eb;
+}
+.filterDot.status-3 {
+  background: #ef4444;
+}
 
-.filterLabel { white-space: nowrap; }
+.filterLabel {
+  white-space: nowrap;
+}
 
 @media (max-width: 1000px) {
   .main {
@@ -548,19 +558,19 @@ body {
 .drawerOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: rgba(0, 0, 0, 0.55);
   z-index: 50;
 }
 
 .leftDrawer {
   position: fixed;
   top: 0;
-  left: -260px;      
+  left: -260px;
   width: 260px;
   height: 100%;
   background: linear-gradient(180deg, var(--panel), var(--panel-2));
   border-right: 1px solid var(--border);
-  box-shadow: 6px 0 20px rgba(0,0,0,0.4);
+  box-shadow: 6px 0 20px rgba(0, 0, 0, 0.4);
   z-index: 60;
   padding: 20px;
   transition: left 0.25s ease-in-out;
@@ -611,41 +621,42 @@ body {
 }
 
 .drawerAuthFooter {
-    margin-top: auto; 
-    padding-top: 20px; 
-    border-top: 1px solid var(--border);
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
 }
 
-.drawerAuthFooter a, .drawerAuthFooter .drawerUserBlock {
-    text-decoration: none;
-    font-size: 18px;
-    font-weight: 700;
-    padding: 10px;
-    border-radius: 8px;
-    background: var(--panel-3);
-    border: 1px solid var(--border);
-    display: block;
-    text-align: center;
+.drawerAuthFooter a,
+.drawerAuthFooter .drawerUserBlock {
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  display: block;
+  text-align: center;
 }
 
 .drawerUserBlock p {
-    margin: 0 0 10px 0;
-    padding: 10px;
-    border-radius: 8px;
-    background: var(--panel-3);
-    border: 1px solid var(--border);
-    text-align: center;
+  margin: 0 0 10px 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--panel-3);
+  border: 1px solid var(--border);
+  text-align: center;
 }
 
 .drawerUserBlock button.drawerLogoutBtn {
-    width: 100%;
-    background: linear-gradient(180deg, var(--brand), var(--brand-2));
-    color: #05101a;
-    border: none;
-    padding: 10px;
-    font-weight: 700;
-    border-radius: 8px;
-    cursor: pointer;
+  width: 100%;
+  background: linear-gradient(180deg, var(--brand), var(--brand-2));
+  color: #05101a;
+  border: none;
+  padding: 10px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .filterToggle {
@@ -725,7 +736,7 @@ body {
 }
 
 .addBtn {
-    background: #ff00ff;
+  background: #ff00ff;
   border: none;
   color: white;
   font-weight: bold;
@@ -777,8 +788,6 @@ body {
   transform: scale(1.1);
 }
 
-
-
 .commentForm select {
   background: var(--panel-3);
   border: 1px solid var(--border);
@@ -802,10 +811,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   padding: 15px 15px 15px 28px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .yourListImg {
@@ -863,16 +872,16 @@ select.statusSelect {
   display: inline-block;
   min-width: 140px;
   height: 36px;
-  padding: 6px 36px 6px 10px; 
+  padding: 6px 36px 6px 10px;
   border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.12);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   background: linear-gradient(#ffffff, #f7f8fa);
   color: #111827;
   font-weight: 600;
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.03);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.03);
   position: relative;
   vertical-align: middle;
 }
@@ -895,7 +904,7 @@ select.statusSelect {
 .addBtnWrapper select option[value="0"],
 .modalStatus select option[value="0"],
 select.statusSelect option[value="0"] {
-  color: #6b7280; 
+  color: #6b7280;
 }
 .addBtnWrapper select option[value="1"],
 .modalStatus select option[value="1"],
@@ -910,9 +919,8 @@ select.statusSelect option[value="2"] {
 .addBtnWrapper select option[value="3"],
 .modalStatus select option[value="3"],
 select.statusSelect option[value="3"] {
-  color: #ef4444; 
+  color: #ef4444;
 }
-
 
 .addBtnWrapper select:has(option[value="0"]:checked),
 .modalStatus select:has(option[value="0"]:checked),
@@ -923,34 +931,42 @@ select.statusSelect:has(option[value="0"]:checked) {
 .addBtnWrapper select:has(option[value="1"]:checked),
 .modalStatus select:has(option[value="1"]:checked),
 select.statusSelect:has(option[value="1"]:checked) {
-  background-color: rgba(22,163,74,0.08);
+  background-color: rgba(22, 163, 74, 0.08);
   color: #16a34a;
 }
 .addBtnWrapper select:has(option[value="2"]:checked),
 .modalStatus select:has(option[value="2"]:checked),
 select.statusSelect:has(option[value="2"]:checked) {
-  background-color: rgba(37,99,235,0.08);
+  background-color: rgba(37, 99, 235, 0.08);
   color: #2563eb;
 }
 .addBtnWrapper select:has(option[value="3"]:checked),
 .modalStatus select:has(option[value="3"]:checked),
 select.statusSelect:has(option[value="3"]:checked) {
-  background-color: rgba(239,68,68,0.08);
+  background-color: rgba(239, 68, 68, 0.08);
   color: #ef4444;
 }
 
 .addBtnWrapper select[value="0"],
 .modalStatus select[value="0"],
-select.statusSelect[value="0"] { color: #374151; }
+select.statusSelect[value="0"] {
+  color: #374151;
+}
 .addBtnWrapper select[value="1"],
 .modalStatus select[value="1"],
-select.statusSelect[value="1"] { color: #15803d; }
+select.statusSelect[value="1"] {
+  color: #15803d;
+}
 .addBtnWrapper select[value="2"],
 .modalStatus select[value="2"],
-select.statusSelect[value="2"] { color: #1e40af; }
+select.statusSelect[value="2"] {
+  color: #1e40af;
+}
 .addBtnWrapper select[value="3"],
 .modalStatus select[value="3"],
-select.statusSelect[value="3"] { color: #b91c1c; }
+select.statusSelect[value="3"] {
+  color: #b91c1c;
+}
 
 @media (max-width: 640px) {
   .addBtnWrapper select,
@@ -967,10 +983,10 @@ select.statusSelect[value="3"] { color: #b91c1c; }
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   padding: 15px 15px 15px 28px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .statusIndicator {
@@ -980,12 +996,20 @@ select.statusSelect[value="3"] { color: #b91c1c; }
   bottom: 8px;
   width: 8px;
   border-radius: 6px;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.12) inset;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12) inset;
   transition: background-color 180ms ease;
   flex-shrink: 0;
 }
 
-.status-0 { background: #6b7280; }
-.status-1 { background: #16a34a; }
-.status-2 { background: #2563eb; }
-.status-3 { background: #ef4444; }
+.status-0 {
+  background: #6b7280;
+}
+.status-1 {
+  background: #16a34a;
+}
+.status-2 {
+  background: #2563eb;
+}
+.status-3 {
+  background: #ef4444;
+}

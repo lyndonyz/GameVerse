@@ -233,18 +233,16 @@ function App() {
           body: JSON.stringify({ username: user.username }),
         });
         const data = await r.json();
-        const items = Array.isArray(data.list) ? data.list : data.games || data.items || [];
+        const items = Array.isArray(data.list)
+          ? data.list
+          : data.games || data.items || [];
 
         const map = {};
         (items || []).forEach((it) => {
           const name =
-            it.gameName ||
-            it.game ||
-            it.name ||
-            it.title ||
-            it.slug ||
-            "";
-          const status = it.status ?? it.state ?? it.gameStatus ?? it.statusCode ?? 0;
+            it.gameName || it.game || it.name || it.title || it.slug || "";
+          const status =
+            it.status ?? it.state ?? it.gameStatus ?? it.statusCode ?? 0;
           const key = normalizeName(name);
           if (key) map[key] = Number(status);
         });
@@ -369,11 +367,11 @@ function App() {
       const r = await fetch(`/api/game/${selected.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-        text,
-        rating: commentRating ? Number(commentRating) : null,
-        user: user.username, 
-      }),
+        body: JSON.stringify({
+          text,
+          rating: commentRating ? Number(commentRating) : null,
+          user: user.username,
+        }),
       });
       const data = await r.json();
       if (data.error) throw new Error(data.error);
@@ -383,9 +381,8 @@ function App() {
         username: user.username,
         at: new Date().toLocaleString(),
         rating: data.comment.rating || commentRating,
-        _id: data.comment._id
+        _id: data.comment._id,
       };
-
 
       setCommentInput("");
       setCommentRating("");
@@ -433,8 +430,8 @@ function App() {
           gameName: game.name,
           image: game.image || game.background_image || "",
           slug: game.slug,
-          status: 0
-        })
+          status: 0,
+        }),
       });
 
       const data = await r.json();
@@ -460,7 +457,7 @@ function App() {
   const handleAddFromModal = () => {
     if (!selected) return;
     handleAddToList(selected);
-  }
+  };
 
   const handleStatusChange = async (gameOrName, newStatus) => {
     try {
@@ -493,8 +490,7 @@ function App() {
       console.error("STATUS UPDATE ERROR:", err);
       alert("Failed to update status.");
     }
-  }
-
+  };
 
   const headerTitle = cat ? (
     <>
@@ -710,7 +706,9 @@ function App() {
                         <select
                           value={userGames[key]}
                           onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => handleStatusChange(g, e.target.value)}
+                          onChange={(e) =>
+                            handleStatusChange(g, e.target.value)
+                          }
                           title="Change status"
                         >
                           <option value="0">Plan to Play</option>
@@ -735,7 +733,11 @@ function App() {
                       role="button"
                       tabIndex={0}
                     >
-                      {g.image ? <img loading="lazy" src={g.image} alt={name} /> : <div className="placeholder">No Image</div>}
+                      {g.image ? (
+                        <img loading="lazy" src={g.image} alt={name} />
+                      ) : (
+                        <div className="placeholder">No Image</div>
+                      )}
                     </div>
 
                     <div className="meta">
@@ -853,27 +855,29 @@ function App() {
 
             {loggedIn && userGames[normalizeName(selected.name)] != null ? (
               <div className="addBtnWrapper2">
-               <div className="modalStatus">
-                 <select
-                   value={userGames[normalizeName(selected.name)]}
-                   onChange={(e) => handleStatusChange(selected, e.target.value)}
-                 >
-                   <option value="0">Plan to Play</option>
-                   <option value="1">Playing</option>
-                   <option value="2">Completed</option>
-                   <option value="3">Dropped</option>
-                 </select>
-               </div>
-               </div>
-             ) : (
-               <button
-                 className="addDetailBtn"
-                 onClick={handleAddFromModal}
-                 title="Add to your list"
-               >
-                 +
-               </button>
-             )}
+                <div className="modalStatus">
+                  <select
+                    value={userGames[normalizeName(selected.name)]}
+                    onChange={(e) =>
+                      handleStatusChange(selected, e.target.value)
+                    }
+                  >
+                    <option value="0">Plan to Play</option>
+                    <option value="1">Playing</option>
+                    <option value="2">Completed</option>
+                    <option value="3">Dropped</option>
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="addDetailBtn"
+                onClick={handleAddFromModal}
+                title="Add to your list"
+              >
+                +
+              </button>
+            )}
             <div className="modalHeader">
               {details?.image && (
                 <img
@@ -966,38 +970,41 @@ function App() {
             ) : (
               <div className="panel">
                 <form className="commentForm" onSubmit={addComment}>
-                      
-                      <div className="ratingRow">
-                        <label>Rating: </label>
-                        <select
-                          value={commentRating}
-                          onChange={(e) => setCommentRating(e.target.value)}
-                        >
-                          <option value="">No Rating</option>
-                          {[1,2,3,4,5].map((n) => (
-                            <option key={n} value={n}>{n}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <textarea
-                        rows={3}
-                        placeholder="Write your thoughts…"
-                        value={commentInput}
-                        onChange={(e) => setCommentInput(e.target.value)}
-                      />
+                  <div className="ratingRow">
+                    <label>Rating: </label>
+                    <select
+                      value={commentRating}
+                      onChange={(e) => setCommentRating(e.target.value)}
+                    >
+                      <option value="">No Rating</option>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <textarea
+                    rows={3}
+                    placeholder="Write your thoughts…"
+                    value={commentInput}
+                    onChange={(e) => setCommentInput(e.target.value)}
+                  />
 
-                      
-                      
-                      <div className="right">
-                        <button
-                          className="btn"
-                          disabled={saving || !commentInput.trim()|| !commentRating || !user?.username}
-                        >
-                          {saving ? "Posting…" : "Post Comment"}
-                        </button>
-                      </div>
-                    </form>
-
+                  <div className="right">
+                    <button
+                      className="btn"
+                      disabled={
+                        saving ||
+                        !commentInput.trim() ||
+                        !commentRating ||
+                        !user?.username
+                      }
+                    >
+                      {saving ? "Posting…" : "Post Comment"}
+                    </button>
+                  </div>
+                </form>
 
                 <ul className="commentList">
                   {comments.length === 0 ? (
@@ -1005,10 +1012,11 @@ function App() {
                   ) : (
                     comments.map((c, i) => (
                       <li key={i} className="comment">
-                        <div className="commentText">{c.rating} ★ - {c.text}</div>
+                        <div className="commentText">
+                          {c.rating} ★ - {c.text}
+                        </div>
                         <div className="commentMeta">
                           {c.username} · {c.at}
-
                         </div>
                       </li>
                     ))
