@@ -30,7 +30,7 @@ function ServiceRegistry() {
     try {
       setLoading(true);
       setError("");
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const API_BASE_URL = "https://gameverse-server.23jpmxbt7759.ca-tor.codeengine.appdomain.cloud";
       const response = await fetch(`${API_BASE_URL}/api/admin/services`);
       const data = await response.json();
       
@@ -55,7 +55,7 @@ function ServiceRegistry() {
       
       const newStatus = currentStatus === 1 ? 0 : 1;
       
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const API_BASE_URL = "https://gameverse-server.23jpmxbt7759.ca-tor.codeengine.appdomain.cloud";
       const response = await fetch(`${API_BASE_URL}/api/admin/services/${encodeURIComponent(serviceName)}/toggle`, {
         method: "POST",
         headers: {

@@ -62,7 +62,7 @@ export default function AccountCreate() {
     }
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const API_BASE_URL = "https://gameverse-server.23jpmxbt7759.ca-tor.codeengine.appdomain.cloud";
       const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

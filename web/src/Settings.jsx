@@ -68,7 +68,7 @@ function Settings() {
 
     setUsernameSaving(true);
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const API_BASE_URL = "https://gameverse-server.23jpmxbt7759.ca-tor.codeengine.appdomain.cloud";
       const res = await fetch(`${API_BASE_URL}/auth/update/username`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -116,7 +116,7 @@ function Settings() {
 
     setEmailSaving(true);
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const API_BASE_URL = "https://gameverse-server.23jpmxbt7759.ca-tor.codeengine.appdomain.cloud";
       const res = await fetch(`${API_BASE_URL}/auth/update/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -171,7 +171,7 @@ function Settings() {
 
     setPasswordSaving(true);
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const API_BASE_URL = "https://gameverse-server.23jpmxbt7759.ca-tor.codeengine.appdomain.cloud";
       const res = await fetch(`${API_BASE_URL}/auth/update/password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
