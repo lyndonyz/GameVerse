@@ -26,6 +26,8 @@ function App() {
   // For UI elements, use isServiceActive for immediate response
   const analyticsActive = isServiceActive("Analytics & Visualization");
   const userLibraryActive = isServiceActive("User Library");
+  const feedbackActive = isServiceActive("User Feedback & Rating Service");
+  const searchActive = isServiceActive("Search & Category Filter");
   
   const isAdmin = user?.username?.toLowerCase() === "admin";
   const [categories, setCategories] = useState([]);
@@ -98,7 +100,7 @@ function App() {
     setErr("");
     const requestId = ++latestDiscoverRef.current;
     try {
-      const r = await fetch(`/api/discover?page=${targetPage}&page_size=24`);
+      const r = await fetch(`/api/discover?page=${targetPage}&page_size=10`);
       const data = await r.json();
       if (data.error) throw new Error(data.error);
       // ignore if a newer discover request has started
@@ -127,7 +129,7 @@ function App() {
       const r = await fetch(
         `/api/search?q=${encodeURIComponent(
           query
-        )}&page=${targetPage}&page_size=24`
+        )}&page=${targetPage}&page_size=10`
       );
       const data = await r.json();
       if (data.error) throw new Error(data.error);
@@ -154,7 +156,7 @@ function App() {
       const r = await fetch(
         `/api/searchByCategory?genre=${encodeURIComponent(
           genre
-        )}&page=${targetPage}&page_size=24`
+        )}&page=${targetPage}&page_size=10`
       );
       const data = await r.json();
       if (data.error) throw new Error(data.error);
@@ -183,7 +185,7 @@ function App() {
       releasedTo,
       sortOrder,
       page: 1,
-      page_size: 24,
+      page_size: 10,
     });
     try {
       const r = await fetch(`/api/advancedSearch?${params.toString()}`);
@@ -530,128 +532,132 @@ function App() {
           GAMEVERSE
         </div>
 
-        <form className="search" onSubmit={onSubmit}>
-          <input
-            className="searchInput"
-            placeholder="Search games..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
+        {(searchActive || isAdmin) && (
+          <>
+            <form className="search" onSubmit={onSubmit}>
+              <input
+                className="searchInput"
+                placeholder="Search games..."
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
 
-          <select
-            className="select"
-            value={cat}
-            onChange={(e) => {
-              const next = e.target.value;
-              setCat(next);
-              setQ("");
-              setPage(1);
-              next
-                ? loadByCategory({ genre: next, page: 1 })
-                : loadDiscover({ page: 1 });
-            }}
-          >
-            <option value="">All categories</option>
-            {categories.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+              <select
+                className="select"
+                value={cat}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setCat(next);
+                  setQ("");
+                  setPage(1);
+                  next
+                    ? loadByCategory({ genre: next, page: 1 })
+                    : loadDiscover({ page: 1 });
+                }}
+              >
+                <option value="">All categories</option>
+                {categories.map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
 
-          <button
-            type="button"
-            className="filterToggle"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            Filter ▾
-          </button>
+              <button
+                type="button"
+                className="filterToggle"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                Filter ▾
+              </button>
 
-          <button className="btn" type="submit" disabled={loading}>
-            {loading ? "Searching…" : "Search"}
-          </button>
-        </form>
+              <button className="btn" type="submit" disabled={loading}>
+                {loading ? "Searching…" : "Search"}
+              </button>
+            </form>
 
-        {showFilters && (
-          <div className="filterPanel" ref={dropdownRef}>
-            <h3 className="filterTitle">Platforms</h3>
-            <div className="filterGrid">
-              {[
-                { id: "4", name: "PC" },
-                { id: "187", name: "PS5" },
-                { id: "18", name: "PS4" },
-                { id: "1", name: "Xbox One" },
-                { id: "7", name: "Nintendo Switch" },
-              ].map((p) => (
-                <label key={p.id} className="checkItem">
-                  <input
-                    type="checkbox"
-                    checked={selectedPlatforms.includes(p.id)}
-                    onChange={() =>
-                      setSelectedPlatforms((prev) =>
-                        prev.includes(p.id)
-                          ? prev.filter((x) => x !== p.id)
-                          : [...prev, p.id]
-                      )
-                    }
-                  />
-                  {p.name}
-                </label>
-              ))}
-            </div>
+            {showFilters && (
+              <div className="filterPanel" ref={dropdownRef}>
+                <h3 className="filterTitle">Platforms</h3>
+                <div className="filterGrid">
+                  {[
+                    { id: "4", name: "PC" },
+                    { id: "187", name: "PS5" },
+                    { id: "18", name: "PS4" },
+                    { id: "1", name: "Xbox One" },
+                    { id: "7", name: "Nintendo Switch" },
+                  ].map((p) => (
+                    <label key={p.id} className="checkItem">
+                      <input
+                        type="checkbox"
+                        checked={selectedPlatforms.includes(p.id)}
+                        onChange={() =>
+                          setSelectedPlatforms((prev) =>
+                            prev.includes(p.id)
+                              ? prev.filter((x) => x !== p.id)
+                              : [...prev, p.id]
+                          )
+                        }
+                      />
+                      {p.name}
+                    </label>
+                  ))}
+                </div>
 
-            <h3 className="filterTitle">VR Support</h3>
-            <div className="vrRow">
-              {["yes", "no"].map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  className={`vrBtn ${vr === v ? "active" : ""}`}
-                  onClick={() => setVr(v)}
+                <h3 className="filterTitle">VR Support</h3>
+                <div className="vrRow">
+                  {["yes", "no"].map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      className={`vrBtn ${vr === v ? "active" : ""}`}
+                      onClick={() => setVr(v)}
+                    >
+                      {v.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+
+                <h3 className="filterTitle">Minimum Rating</h3>
+                <select
+                  className="select"
+                  value={minRating}
+                  onChange={(e) => setMinRating(e.target.value)}
                 >
-                  {v.toUpperCase()}
-                </button>
-              ))}
-            </div>
+                  <option value="">Any</option>
+                  <option value="60">60+</option>
+                  <option value="70">70+</option>
+                  <option value="80">80+</option>
+                  <option value="90">90+</option>
+                </select>
 
-            <h3 className="filterTitle">Minimum Rating</h3>
-            <select
-              className="select"
-              value={minRating}
-              onChange={(e) => setMinRating(e.target.value)}
-            >
-              <option value="">Any</option>
-              <option value="60">60+</option>
-              <option value="70">70+</option>
-              <option value="80">80+</option>
-              <option value="90">90+</option>
-            </select>
+                <h3 className="filterTitle">Release Date</h3>
+                <input
+                  type="date"
+                  className="searchInput"
+                  value={releasedFrom}
+                  onChange={(e) => setReleasedFrom(e.target.value)}
+                />
+                <input
+                  type="date"
+                  className="searchInput"
+                  value={releasedTo}
+                  onChange={(e) => setReleasedTo(e.target.value)}
+                />
 
-            <h3 className="filterTitle">Release Date</h3>
-            <input
-              type="date"
-              className="searchInput"
-              value={releasedFrom}
-              onChange={(e) => setReleasedFrom(e.target.value)}
-            />
-            <input
-              type="date"
-              className="searchInput"
-              value={releasedTo}
-              onChange={(e) => setReleasedTo(e.target.value)}
-            />
-
-            <h3 className="filterTitle">Sort By Rating</h3>
-            <select
-              className="select"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-            >
-              <option value="">None</option>
-              <option value="high">Highest → Lowest</option>
-              <option value="low">Lowest → Highest</option>
-            </select>
-          </div>
+                <h3 className="filterTitle">Sort By Rating</h3>
+                <select
+                  className="select"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                >
+                  <option value="">None</option>
+                  <option value="high">Highest → Lowest</option>
+                  <option value="low">Lowest → Highest</option>
+                </select>
+              </div>
+            )}
+          </>
         )}
       </header>
 
@@ -704,7 +710,7 @@ function App() {
                   );
                 }
 
-                const rank = (page - 1) * 24 + idx + 1;
+                const rank = (page - 1) * 10 + idx + 1;
                 const name = g?.name || "";
                 const key = normalizeName(name);
                 const inList = loggedIn && userGames[key] != null;
@@ -941,12 +947,14 @@ function App() {
               >
                 Overview
               </button>
-              <button
-                className={`tab ${tab === "comments" ? "active" : ""}`}
-                onClick={() => setTab("comments")}
-              >
-                Comments ({comments.length})
-              </button>
+              {(feedbackActive || isAdmin) && (
+                <button
+                  className={`tab ${tab === "comments" ? "active" : ""}`}
+                  onClick={() => setTab("comments")}
+                >
+                  Comments ({comments.length})
+                </button>
+              )}
             </div>
 
             {tab === "overview" ? (
@@ -996,7 +1004,7 @@ function App() {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : tab === "comments" && (feedbackActive || isAdmin) ? (
               <div className="panel">
                 <form className="commentForm" onSubmit={addComment}>
                   <div className="ratingRow">
@@ -1052,7 +1060,7 @@ function App() {
                   )}
                 </ul>
               </div>
-            )}
+            ) : null}
           </div>
         </>
       )}
