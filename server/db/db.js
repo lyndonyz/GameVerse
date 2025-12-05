@@ -11,9 +11,10 @@ const client = CloudantV1.newInstance({
 });
 
 client.setServiceUrl(process.env.CLOUDANT_URL);
-
+ 
 module.exports = {
   client,
   USERS_DB: "gameverse-users-db",
-  COMMENTS_DB: "gameverse-comments-db"
+  COMMENTS_DB: "gameverse-comments-db",
+  SERVICE_REGISTRY_DB: "gameverse-service-registry"
 };
