@@ -4,10 +4,6 @@ COPY package.json package-lock.json ./
 RUN npm install
 COPY . .
 RUN rm -rf dist
-# Accept build arguments
-ARG VITE_RAWG_API_KEY
-# Set as environment variable for Vite
-ENV VITE_RAWG_API_KEY=$VITE_RAWG_API_KEY
 RUN npm run build 
 FROM nginx:alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
