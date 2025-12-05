@@ -13,6 +13,50 @@ function YourList() {
   const [filterStatus, setFilterStatus] = useState(null);
   const statusLabels = ["Plan to Play", "Playing", "Completed", "Dropped"];
 
+  // remove game handler
+  async function handleRemoveGame(game) {
+    if (!loggedIn || !user) {
+      alert("Please log in.");
+      return;
+    }
+    const name = game.gameName || game.name || game.slug || "";
+    if (!name) {
+      alert("Cannot remove: missing game name.");
+      return;
+    }
+    const ok = window.confirm(`Remove "${name}" from your list?`);
+    if (!ok) return;
+
+    const prev = games;
+    // optimistically remove from UI
+    setGames((g) => g.filter((item) => (item.gameName || item.name || item.slug) !== name));
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/removeGameFromList`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user.username, gameName: name }),
+      });
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || payload?.error) {
+        console.error("removeGameFromList error", res.status, payload);
+        setGames(prev);
+        alert("Failed to remove game. Try again.");
+        return;
+      }
+
+      // success: wait a second then refresh the list from server
+      setTimeout(() => {
+        loadList();
+      }, 1000);
+
+    } catch (err) {
+      console.error("removeGameFromList network error", err);
+      setGames(prev);
+      alert("Network error while removing game.");
+    }
+  }
+
   async function enrichSavedGames(savedList) {
     if (!Array.isArray(savedList) || savedList.length === 0) return [];
     const CONCURRENCY = 5;
@@ -57,46 +101,50 @@ function YourList() {
     return results;
   }
 
-  useEffect(() => {
-    async function loadList() {
-      if (!loggedIn || !user) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const r = await fetch(`${API_BASE_URL}/auth/getAllGames`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: user.username })
-        });
-
-        const data = await r.json();
-
-        if (data.success && Array.isArray(data.list)) {
-          const immediate = data.list.map((item) => ({
-            ...item,
-            image: item.image || "",
-            gameName: item.gameName || item.name || "",
-            id: item.id || null,
-            status: typeof item.status === "number" ? item.status : Number(item.status || 0),
-          }));
-          setGames(immediate);
-          enrichSavedGames(data.list)
-            .then((enriched) => setGames(enriched))
-            .catch((err) => console.error("Background enrich failed:", err));
-        } else {
-          setGames([]);
-        }
-      } catch (err) {
-        console.error("ERROR LOADING LIST:", err);
-        setGames([]);
-      }
-
+  // moved loadList to component scope so it can be called after removal
+  async function loadList() {
+    setLoading(true);
+    if (!loggedIn || !user) {
+      setGames([]);
       setLoading(false);
+      return;
     }
 
+    try {
+      const r = await fetch(`${API_BASE_URL}/auth/getAllGames`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user.username })
+      });
+
+      const data = await r.json();
+
+      if (data.success && Array.isArray(data.list)) {
+        const immediate = data.list.map((item) => ({
+          ...item,
+          image: item.image || "",
+          gameName: item.gameName || item.name || "",
+          id: item.id || null,
+          status: typeof item.status === "number" ? item.status : Number(item.status || 0),
+        }));
+        setGames(immediate);
+        enrichSavedGames(data.list)
+          .then((enriched) => setGames(enriched))
+          .catch((err) => console.error("Background enrich failed:", err));
+      } else {
+        setGames([]);
+      }
+    } catch (err) {
+      console.error("ERROR LOADING LIST:", err);
+      setGames([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
     loadList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedIn, user]);
 
   const normalize = (s) => (s || "").toString().trim().toLowerCase();
@@ -237,10 +285,25 @@ function YourList() {
             ) : (
               <ul className="yourListGrid">
                 {sortedGames.map((g, idx) => (
-                  <li key={idx} className="yourListItem">
+                  <li key={idx} className="yourListItem" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    {/* number column */}
+                    <div
+                      className="listNumber"
+                      style={{
+                        width: 36,
+                        minWidth: 36,
+                        textAlign: "center",
+                        fontWeight: 700,
+                        color: "var(--muted)",
+                        fontSize: 14,
+                      }}
+                    >
+                      {idx + 1}
+                    </div>
+
                     <div className={`statusIndicator status-${String(g.status ?? 0)}`} />
 
-                    <div className="yourListLeft" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div className="yourListLeft" style={{ display: "flex", alignItems: "center", gap: 12, flex: 1 }}>
                       <img
                         className="yourListImg"
                         src={g.image || ""}
@@ -250,25 +313,36 @@ function YourList() {
                       />
                       <div>
                         <h3 className="yourListTitle" style={{ margin: 0 }}>{g.gameName || g.slug || "Unknown"}</h3>
-                        {g.slug && <p className="yourListSlug" style={{ margin: "4px 0 0", fontSize: 12 }}>{g.slug}</p>}
+                        {/* removed smaller slug text per request */}
                       </div>
                     </div>
 
-                    <div className="yourListStatusRight">
-                      <label>Status: </label>
-                      <select
-                        value={String(g.status ?? 0)}
-                        onChange={(e) => updateStatus(g, e.target.value)}
-                      >
-                        <option value="0">Plan to Play</option>
-                        <option value="1">Playing</option>
-                        <option value="2">Completed</option>
-                        <option value="3">Dropped</option>
-                      </select>
-                    </div>
+                    <div className="yourListStatusRight" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                      <div>
+                        <label>Status: </label>
+                        <select
+                          className="statusSelect"
+                          value={String(g.status ?? 0)}
+                          onChange={(e) => updateStatus(g, e.target.value)}
+                        >
+                          <option value="0">Plan to Play</option>
+                          <option value="1">Playing</option>
+                          <option value="2">Completed</option>
+                          <option value="3">Dropped</option>
+                        </select>
+                      </div>
 
+                      <button
+                        className="btn small"
+                        onClick={() => handleRemoveGame(g)}
+                        aria-label={`Remove ${g.gameName || "game"} from list`}
+                        style={{ marginTop: 8 }}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </li>
-                ))}
+                 ))}
               </ul>
             )}
           </>

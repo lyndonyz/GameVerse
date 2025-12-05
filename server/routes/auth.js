@@ -151,7 +151,8 @@ const {
   addGameToList,
   updateGameStatus,
   gameInList,
-  getAllGames
+  getAllGames,
+  removeGameFromList,
 } = require("../db/userDB");
 
 // Add a game with default status (plan_to_play)
@@ -198,6 +199,29 @@ router.post("/updateGameStatus", async (req, res) => {
   }
 
   res.json({ success: true });
+});
+
+// Remove a game from user's list
+router.post("/removeGameFromList", async (req, res) => {
+  try {
+    const { username, gameName } = req.body;
+    if (!username || !gameName) {
+      return res.status(400).json({ error: "MISSING_FIELDS" });
+    }
+
+    const result = await removeGameFromList(username, gameName);
+    if (!result) {
+      return res.status(500).json({ error: "REMOVE_FAILED" });
+    }
+    if (result.error) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("REMOVE GAME ERROR:", err);
+    return res.status(500).json({ error: "SERVER_ERROR" });
+  }
 });
 
 // Get status of a single game

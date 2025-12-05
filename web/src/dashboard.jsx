@@ -534,9 +534,15 @@ function Dashboard() {
 
               <div className="random-picks-section" style={{ marginTop: 24 }}>
                 <div className="section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                  <div className="section-title" style={{ fontWeight: 700 }}>Random Game Picks</div>
-                  <button className="btn btn-sm" onClick={() => fetchRandomPicks()} style={{ paddingLeft: 12, paddingRight: 12 }}>
-                    Refresh
+                  <div className="section-title" style={{ fontWeight: 700 }}>Random Game Picks For You, {user?.username}</div>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => fetchRandomPicks()}
+                    disabled={loadingPicks}
+                    aria-label="Refresh random picks"
+                    style={{ paddingLeft: 12, paddingRight: 12 }}
+                  >
+                    {loadingPicks ? "Refreshing…" : "Refresh"}
                   </button>
                 </div>
 
