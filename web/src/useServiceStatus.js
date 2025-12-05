@@ -7,7 +7,8 @@ export function useServiceStatus() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch("http://localhost:8000/api/admin/services");
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+        const response = await fetch(`${API_BASE_URL}/api/admin/services`);
         const data = await response.json();
         
         if (!data.error) {

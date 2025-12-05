@@ -68,8 +68,8 @@ function Settings() {
 
     setUsernameSaving(true);
     try {
-      const res = await fetch("http://localhost:8000/auth/update/username", {
-        // const res = await fetch(`${API_BASE_URL}/auth/update/username`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const res = await fetch(`${API_BASE_URL}/auth/update/username`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id, newUsername }),
@@ -116,8 +116,8 @@ function Settings() {
 
     setEmailSaving(true);
     try {
-      const res = await fetch("http://localhost:8000/auth/update/email", {
-        // const res = await fetch(`${API_BASE_URL}/auth/update/email`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const res = await fetch(`${API_BASE_URL}/auth/update/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id, newEmail: newEmail.trim() }),
@@ -171,8 +171,8 @@ function Settings() {
 
     setPasswordSaving(true);
     try {
-      const res = await fetch("http://localhost:8000/auth/update/password", {
-        // const res = await fetch(`${API_BASE_URL}/auth/update/password`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const res = await fetch(`${API_BASE_URL}/auth/update/password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id, currentPassword, newPassword }),

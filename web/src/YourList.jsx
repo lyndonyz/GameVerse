@@ -25,7 +25,7 @@ function YourList() {
     }
   }, [loggedIn, userLibraryActiveOrLoading, isAdmin, navigate]);
 
-  const API_BASE_URL = "http://localhost:8000";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState(null);

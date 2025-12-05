@@ -40,8 +40,8 @@ export default function Login() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/auth/login", {
-        // const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: username, password }),
