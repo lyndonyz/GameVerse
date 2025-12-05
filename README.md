@@ -39,11 +39,11 @@ Once done, you should be able to run the web application locally using:
 ```npm run dev```
 
 # Notes on How our Code is Ran/Managed.
-It's running Vite + React + Express.
-<br>User and Comment Databases are ran remotely via IBM Cloud Databses.
+It's running **Vite** + **React** + **Express**.
+<br>User and Comment Databases are ran remotely via **IBM Cloud Databses**.
 <br>The service registry is controlled by our Admin account, which enables us to manually turn on/off microservices.
-<br>Our User passwords are encrypted by bcrypt.
-<br>Both our backend and frontend are ran on IBM Cloud and deployed using both Docker and IBM Cloud CE.
+<br>Our User passwords are encrypted by **bcrypt**.
+<br>Both our backend and frontend are ran on **IBM Cloud** and deployed using both **Docker** and **IBM Cloud CE**.
 
 # How to Push and Pull GameVerse Repo:
 ## Using Visual Studio Code to Push Stuff
