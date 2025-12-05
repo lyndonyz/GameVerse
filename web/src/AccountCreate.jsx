@@ -10,12 +10,8 @@ export default function AccountCreate() {
   const navigate = useNavigate();
   const { user, loggedIn } = useAuth();
   const { isServiceActive, isServiceActiveAndLoaded, loading: servicesLoading } = useServiceStatus();
-  
-  // For navigation, use isServiceActiveAndLoaded to hide while loading
   const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
   const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
-  
-  // For UI elements (if any in future), use isServiceActive for immediate response
   const analyticsActive = isServiceActive("Analytics & Visualization");
   const userLibraryActive = isServiceActive("User Library");
   const gameCatalogActive = isServiceActive("Game & Experience Catalog");
@@ -39,8 +35,7 @@ export default function AccountCreate() {
     e.preventDefault();
 
     setError("");
-
-    // Check if Game & Experience Catalog service is active (admins bypass)
+    
     if (!gameCatalogActive && !isAdmin) {
       setError("Account creation is currently unavailable. The Game & Experience Catalog service is disabled.");
       return;

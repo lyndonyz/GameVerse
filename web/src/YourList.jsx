@@ -13,8 +13,6 @@ function YourList() {
   const userLibraryActiveOrLoading = isServiceActiveOrLoading("User Library");
   const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
   const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
-  
-  // For UI elements, use isServiceActive for immediate response
   const analyticsActive = isServiceActive("Analytics & Visualization");
   const userLibraryActive = isServiceActive("User Library");
   

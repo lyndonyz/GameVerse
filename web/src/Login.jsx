@@ -9,11 +9,8 @@ export default function Login() {
   const { setLoggedIn, setUser, user, loggedIn } = useAuth();
   const { isServiceActive, isServiceActiveAndLoaded, loading: servicesLoading } = useServiceStatus();
   
-  // For navigation, use isServiceActiveAndLoaded to hide while loading
   const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
   const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
-  
-  // For UI elements (if any in future), use isServiceActive for immediate response
   const analyticsActive = isServiceActive("Analytics & Visualization");
   const userLibraryActive = isServiceActive("User Library");
   const gameCatalogActive = isServiceActive("Game & Experience Catalog");

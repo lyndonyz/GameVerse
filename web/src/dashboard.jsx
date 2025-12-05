@@ -35,15 +35,9 @@ function Dashboard() {
   const [userGames, setUserGames] = useState({});
 
   const normalizeName = (n) => (n || "").toString().trim().toLowerCase();
-
-  // For redirects, use isServiceActiveOrLoading to prevent premature redirects
   const analyticsActiveOrLoading = isServiceActiveOrLoading("Analytics & Visualization");
-  
-  // For navigation, use isServiceActiveAndLoaded to hide while loading
   const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
   const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
-  
-  // For UI elements, use isServiceActive for immediate response
   const analyticsActive = isServiceActive("Analytics & Visualization");
   const userLibraryActive = isServiceActive("User Library");
   

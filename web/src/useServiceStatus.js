@@ -21,8 +21,6 @@ export function useServiceStatus() {
     };
 
     fetchServices();
-    
-    // Poll every 10 seconds
     const interval = setInterval(fetchServices, 10000);
     
     return () => clearInterval(interval);
@@ -31,16 +29,12 @@ export function useServiceStatus() {
   const isServiceActive = (serviceName) => {
     return services[serviceName] === 1;
   };
-
-  // For navigation: only show if loaded AND active (won't show during loading)
   const isServiceActiveAndLoaded = (serviceName) => {
     if (loading) {
       return false;
     }
     return services[serviceName] === 1;
   };
-
-  // For redirects: prevent redirect while loading (assume active during load)
   const isServiceActiveOrLoading = (serviceName) => {
     if (loading) {
       return true;

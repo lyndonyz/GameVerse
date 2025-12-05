@@ -11,19 +11,12 @@ function App() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [results, setResults] = useState([]);
-  const [gameStatus, setGameStatus] = useState(0);
   const [hasNext, setHasNext] = useState(false);
   const [hasPrev, setHasPrev] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, setLoggedIn, user, logout } = useAuth();
-  
-  // For navigation, use isServiceActiveAndLoaded to hide while loading
-  const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
-  const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
-  
-  // For UI elements, use isServiceActive for immediate response
   const analyticsActive = isServiceActive("Analytics & Visualization");
   const userLibraryActive = isServiceActive("User Library");
   const feedbackActive = isServiceActive("User Feedback & Rating Service");
@@ -51,6 +44,9 @@ function App() {
   const [tab, setTab] = useState("overview");
   const [userGames, setUserGames] = useState({});
   const normalizeName = (n) => (n || "").toString().trim().toLowerCase();
+  const hasAdvancedFilters = useMemo(() => {
+    return !!(selectedPlatforms.length || vr || minRating || releasedFrom || releasedTo || sortOrder);
+  }, [selectedPlatforms.length, vr, minRating, releasedFrom, releasedTo, sortOrder]);
 
   const displayedResults = useMemo(() => {
     if (!sortOrder) return results;
@@ -266,23 +262,16 @@ function App() {
         setUserGames({});
       }
     })();
-  }, [loggedIn, user]);
+  }, [loggedIn, user, API_BASE_URL]);
 
-  // realtime search
   useEffect(() => {
     const t = setTimeout(() => {
-      if (
-        q.trim().length > 2 &&
-        !platform &&
-        !vr &&
-        !minRating &&
-        !releasedFrom &&
-        !releasedTo
-      )
+      if (q.trim().length > 2 && !hasAdvancedFilters) {
         runSearch({ page: 1 });
+      }
     }, 500);
     return () => clearTimeout(t);
-  }, [q]);
+  }, [q, hasAdvancedFilters]);
 
   // close filter panel on outside click
   useEffect(() => {
@@ -300,15 +289,7 @@ function App() {
 
   const onSubmit = (e) => {
     e.preventDefault();
-    if (
-      selectedPlatforms.length ||
-      vr ||
-      minRating ||
-      releasedFrom ||
-      releasedTo ||
-      sortOrder
-    )
-      return runAdvancedSearch(1);
+    if (hasAdvancedFilters) return runAdvancedSearch(1);
     if (!q.trim())
       return cat ? loadByCategory({ page: 1 }) : loadDiscover({ page: 1 });
     runSearch({ page: 1 });
@@ -316,15 +297,7 @@ function App() {
 
   const goNext = () => {
     if (!hasNext) return;
-    if (
-      selectedPlatforms.length ||
-      vr ||
-      minRating ||
-      releasedFrom ||
-      releasedTo ||
-      sortOrder
-    )
-      runAdvancedSearch(page + 1);
+    if (hasAdvancedFilters) runAdvancedSearch(page + 1);
     else if (cat) loadByCategory({ page: page + 1 });
     else if (!q.trim()) loadDiscover({ page: page + 1 });
     else runSearch({ page: page + 1 });
@@ -332,15 +305,7 @@ function App() {
 
   const goPrev = () => {
     if (!hasPrev || page <= 1) return;
-    if (
-      selectedPlatforms.length ||
-      vr ||
-      minRating ||
-      releasedFrom ||
-      releasedTo ||
-      sortOrder
-    )
-      runAdvancedSearch(page - 1);
+    if (hasAdvancedFilters) runAdvancedSearch(page - 1);
     else if (cat) loadByCategory({ page: page - 1 });
     else if (!q.trim()) loadDiscover({ page: page - 1 });
     else runSearch({ page: page - 1 });
@@ -494,7 +459,6 @@ function App() {
         }),
       });
 
-      setGameStatus(Number(newStatus));
       // update local in-memory map so dropdown displays correct value
       const keyForMap = normalizeName(name) || normalizeName(slug);
       if (keyForMap) {
@@ -1067,7 +1031,5 @@ function App() {
     </div>
   );
 }
-
-
 
 export default App;
