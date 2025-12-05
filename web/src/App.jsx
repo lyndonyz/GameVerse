@@ -218,7 +218,7 @@ function App() {
         return;
       }
       try {
-        const r = await fetch("/api/categories");
+        const r = await fetch(`${API_BASE_URL}/api/categories`);
         const data = await r.json();
         if (data?.categories) {
           setCategories(data.categories);
