@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 import "./App.css";
@@ -27,8 +27,9 @@ function Dashboard() {
 
   const [randomPicks, setRandomPicks] = useState([]);
   const [loadingPicks, setLoadingPicks] = useState(false);
-
-  // user's saved games map (normalizedName -> status)
+  const recentShownRef = useRef(new Set());
+  const recentQueueRef = useRef([]);
+  const RECENT_MAX = 30;
   const [userGames, setUserGames] = useState({});
 
   const normalizeName = (n) => (n || "").toString().trim().toLowerCase();
@@ -37,8 +38,6 @@ function Dashboard() {
     const timerId = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timerId);
   }, []);
-
-  // load user's saved games map for add-button state
   useEffect(() => {
     if (!loggedIn || !user?.username) {
       setUserGames({});
@@ -170,8 +169,6 @@ function Dashboard() {
     }
     loadComments();
   }, [loggedIn, user]);
-
-  // extractable fetch routine so UI can refresh on-demand
   async function fetchRandomPicks() {
     setLoadingPicks(true);
     try {
@@ -193,109 +190,120 @@ function Dashboard() {
       };
       const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
       const randChoice = (a) => a[Math.floor(Math.random() * a.length)];
-
-      // try several randomized strategies (stop when we have a decent pool)
       let pool = [];
 
-      // Strategy A: discover with random page and random ordering
+      const avoidNames = new Set(Object.keys(userGames || {}));
+      const recentIds = new Set(Array.from(recentShownRef.current || []));
+      const mergeResults = (resObj) => {
+        if (!resObj) return;
+        if (Array.isArray(resObj.results)) pool = pool.concat(resObj.results);
+        else if (Array.isArray(resObj)) pool = pool.concat(resObj);
+        else if (Array.isArray(resObj.data)) pool = pool.concat(resObj.data);
+      };
+
       try {
-        const page = randInt(1, 6); // random page within a small range
-        const pageSize = 100;
-        const ordering = randChoice(["", "rating", "-rating", "released", "-released"]);
-        const url = `/api/discover?page=${page}&page_size=${pageSize}${ordering ? `&ordering=${ordering}` : ""}`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          pool = pool.concat(Array.isArray(data.results) ? data.results : Array.isArray(data) ? data : []);
-        }
-      } catch (e) {
-        console.warn("discover randomized fetch failed", e);
-      }
-
-      // Strategy B: randomized search fallback (random common term + random page + random year window)
-      if (pool.length < 20) {
-        try {
-          const commonTerms = ["game", "adventure", "action", "puzzle", "rpg", "quest", "arena", "world", "battle"];
-          const q = randChoice(commonTerms);
-          const page = randInt(1, 5);
-          const pageSize = 50;
-          // pick a random release year window to diversify results
-          const year = randInt(1990, new Date().getFullYear());
-          const releasedFrom = `${year}-01-01`;
-          const releasedTo = `${year}-12-31`;
-          const url = `/api/search?q=${encodeURIComponent(q)}&page=${page}&page_size=${pageSize}&releasedFrom=${releasedFrom}&releasedTo=${releasedTo}`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            pool = pool.concat(Array.isArray(data.results) ? data.results : []);
-          }
-        } catch (e) {
-          console.warn("search randomized fetch failed", e);
-        }
-      }
-
-      // Strategy C: multi-term micro-queries (aggregate)
-      if (pool.length < 20) {
-        try {
-          const terms = ["indie", "multiplayer", "singleplayer", "strategy", "racing"];
-          const promises = terms.map((t) =>
-            fetch(`/api/search?q=${encodeURIComponent(t)}&page=1&page_size=12`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
-          );
-          const settled = await Promise.allSettled(promises);
-          for (const s of settled) {
-            if (s.status === "fulfilled" && s.value && Array.isArray(s.value.results)) {
-              pool = pool.concat(s.value.results);
+        const orderings = ["", "rating", "-rating", "released", "-released", "name", "-name"];
+        const pagesToTry = [randInt(1, 6), randInt(1, 8), randInt(1, 12)];
+        await Promise.all(
+          pagesToTry.map(async (pg) => {
+            const pageSize = 100;
+            const ordering = randChoice(orderings);
+            const url = `/api/discover?page=${pg}&page_size=${pageSize}${ordering ? `&ordering=${ordering}` : ""}`;
+            try {
+              const r = await fetch(url);
+              if (r.ok) mergeResults(await r.json());
+            } catch (e) {
             }
-          }
-        } catch (e) {
-          console.warn("multi-term fetch failed", e);
-        }
+          })
+        );
+      } catch (e) {
+        console.warn("discover sweep failed", e);
+      }
+      try {
+        const terms = ["game", "adventure", "action", "puzzle", "rpg", "indie", "multiplayer", "strategy", "racing", "platformer"];
+        const sampleTerms = Array.from({ length: 4 }, () => randChoice(terms));
+        const searchPromises = sampleTerms.map((t) => {
+          const page = randInt(1, 6);
+          const pageSize = 40;
+          const year = randInt(1990, new Date().getFullYear());
+          const url = `/api/search?q=${encodeURIComponent(t)}&page=${page}&page_size=${pageSize}&releasedFrom=${year}-01-01&releasedTo=${year}-12-31`;
+          return fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+        });
+        const settled = await Promise.all(searchPromises);
+        for (const s of settled) if (s) mergeResults(s);
+      } catch (e) {
+        console.warn("randomized search sampling failed", e);
       }
 
-      // Strategy D: last-resort RAWG random page
-      if (pool.length < 10) {
+      if (pool.length < 40) {
         try {
           const RAWG_KEY = process.env.REACT_APP_RAWG_API_KEY || "";
           if (RAWG_KEY) {
-            // attempt to pick truly random page via RAWG meta
             const metaRes = await fetch(`https://api.rawg.io/api/games?key=${encodeURIComponent(RAWG_KEY)}&page_size=1`);
             if (metaRes.ok) {
               const meta = await metaRes.json();
               const total = Number(meta.count || 0) || 1000;
-              const pageSize = 5;
-              const totalPages = Math.max(1, Math.ceil(total / pageSize));
-              const page = randInt(1, Math.min(totalPages, 500)); // cap pages to avoid huge offsets
+              const pageSize = 20;
+              const page = randInt(1, Math.min(Math.ceil(total / pageSize), 500));
               const res = await fetch(`https://api.rawg.io/api/games?key=${encodeURIComponent(RAWG_KEY)}&page_size=${pageSize}&page=${page}`);
               if (res.ok) {
-                const data = await res.json();
-                pool = pool.concat(Array.isArray(data.results) ? data.results : []);
+                const d = await res.json();
+                mergeResults(d);
               }
             }
           }
         } catch (e) {
-          console.warn("RAWG fallback failed", e);
+          console.warn("RAWG sample failed", e);
         }
       }
 
-      // normalize and pick 5 truly random unique items with extra randomness
-      pool = uniqueById(pool);
-      shuffle(pool);
+      pool = uniqueById(pool).map((g) => {
+        const name = (g.name || g.title || g.gameName || g.slug || "").toString();
+        const nid = (g.id || g.slug || name).toString();
+        return { ...g, _normName: name.trim().toLowerCase(), _nid: nid };
+      });
 
-      // apply random modifiers to diversify (e.g. drop some by probability, prefer certain fields)
+      pool = pool.filter((g) => {
+        if (!g) return false;
+        if (!g._normName) return true;
+        if (avoidNames.has(g._normName)) return false;
+        if (recentIds.has(g._nid) || recentIds.has(g._normName)) return false;
+        return true;
+      });
+
+      shuffle(pool);
       const modifiers = [
-        (g) => g, // identity
-        (g) => (g.rating && Math.random() < 0.7 ? g : null), // prefer rated sometimes
-        (g) => (g.released && Math.random() < 0.6 ? g : null),
-        (g) => g, // noop
+        (g) => g,
+        (g) => (g.rating && Math.random() < 0.8 ? g : null),
+        (g) => (g.released && Math.random() < 0.65 ? g : null),
+        (g) => g,
       ];
-      // map with some mods applied and filter out nulls
       const modified = pool
-        .map((g) => (Math.random() < 0.35 ? modifiers[Math.floor(Math.random() * modifiers.length)](g) : g))
+        .map((g) => (Math.random() < 0.45 ? modifiers[Math.floor(Math.random() * modifiers.length)](g) : g))
         .filter(Boolean);
 
-      // final shuffle and take up to 5
       shuffle(modified);
-      const picks = modified.slice(0, 5);
+      let picks = modified.slice(0, 5);
+
+      if (picks.length < 5) {
+        const relaxed = uniqueById(
+          (pool.concat(modified)).filter(Boolean)
+        ).slice(0, 8);
+        shuffle(relaxed);
+        picks = relaxed.slice(0, 5);
+      }
+
+      for (const p of picks) {
+        const idKey = p._nid || p._normName || (p.id || p.slug || p.name || "").toString();
+        if (!recentShownRef.current.has(idKey)) {
+          recentShownRef.current.add(idKey);
+          recentQueueRef.current.push(idKey);
+        }
+      }
+      while (recentQueueRef.current.length > RECENT_MAX) {
+        const removed = recentQueueRef.current.shift();
+        if (removed) recentShownRef.current.delete(removed);
+      }
 
       setRandomPicks(picks);
     } catch (err) {
@@ -310,7 +318,7 @@ function Dashboard() {
     if (loggedIn) fetchRandomPicks();
   }, [loggedIn]);
 
-  // add to user's list (copied/adapted from App.jsx)
+  // add to user's list
   async function handleAddToList(game) {
     if (!loggedIn || !user) {
       alert("Please log in to save games.");
@@ -345,8 +353,20 @@ function Dashboard() {
         return;
       }
 
-      // update local map
-      setUserGames((prev) => ({ ...prev, [normalizeName(name)]: 0 }));
+      // update local map and stats 
+      setUserGames((prev) => {
+        const key = normalizeName(name);
+        if (prev[key] != null) return prev;
+        const next = { ...prev, [key]: 0 };
+        return next;
+      });
+
+      setCounts((prev) => {
+        const copy = Array.isArray(prev) ? [...prev] : [0, 0, 0, 0];
+        copy[0] = (copy[0] || 0) + 1;
+        return copy;
+      });
+      setTotal((t) => (Number(t) || 0) + 1);
     } catch (err) {
       console.error("ADD GAME ERROR:", err);
       alert("Network error while adding game.");
@@ -357,6 +377,8 @@ function Dashboard() {
   async function handleStatusChangeFromPick(game, newStatus) {
     if (!loggedIn || !user) return;
     const name = game.name || game.gameName || game.title || game.slug || "";
+    const key = normalizeName(name);
+    const parsedNew = Number(newStatus);
     try {
       await fetch(`${API_BASE_URL}/auth/updateGameStatus`, {
         method: "POST",
@@ -364,18 +386,36 @@ function Dashboard() {
         body: JSON.stringify({
           username: user.username,
           gameName: name,
-          newStatus: Number(newStatus),
+          newStatus: parsedNew,
           slug: game.slug || game.id || undefined,
         }),
       });
-      setUserGames((prev) => ({ ...prev, [normalizeName(name)]: Number(newStatus) }));
+
+      setUserGames((prev) => {
+        const prevStatus = prev[key];
+        const next = { ...(prev || {}), [key]: parsedNew };
+
+        // update counts
+        setCounts((countsPrev) => {
+          const c = Array.isArray(countsPrev) ? [...countsPrev] : [0, 0, 0, 0];
+          if (typeof prevStatus === "number" && prevStatus >= 0 && prevStatus <= 3) {
+            c[prevStatus] = Math.max(0, (c[prevStatus] || 0) - 1);
+          }
+          if (parsedNew >= 0 && parsedNew <= 3) {
+            c[parsedNew] = (c[parsedNew] || 0) + 1;
+          }
+          return c;
+        });
+
+        return next;
+      });
     } catch (err) {
       console.error("Failed to update status", err);
       alert("Failed to update status.");
     }
   }
 
-  // delete comment handler (re-added)
+  // delete comment handler
   async function handleDeleteComment(id) {
     if (!id) return;
     const ok = window.confirm("Delete this comment? This action cannot be undone.");
@@ -400,8 +440,6 @@ function Dashboard() {
         alert("Failed to delete comment: " + (payload?.error || payload?.message || "unknown"));
         return;
       }
-
-      // remove from UI
       setComments((prev) => prev.filter((c) => String(c.id) !== String(id)));
     } catch (err) {
       console.error("delete comment network error:", err);
