@@ -83,7 +83,6 @@ body {
   box-shadow: 0 0 0 3px rgba(58, 119, 255, 0.15);
 }
 
-/* CATEGORY / SORT SELECT — PURPLE THEME */
 .select {
   appearance: none;
   -webkit-appearance: none;
@@ -128,7 +127,6 @@ body {
   box-shadow: 0 0 0 3px rgba(198, 123, 255, 0.35);
 }
 
-/* Dropdown options list */
 .select option {
   background: #ffffff !important;
   color: #000000 !important;
@@ -472,7 +470,6 @@ body {
   margin-top: 4px;
 }
 
-/* status filter bar above the list */
 .statusFilterBar {
   display: flex;
   gap: 8px;
@@ -501,7 +498,6 @@ body {
   box-shadow: 0 2px 0 rgba(0,0,0,0.2);
 }
 
-/* small colored dot inside filter button */
 .filterDot {
   width: 12px;
   height: 12px;
@@ -509,13 +505,11 @@ body {
   flex-shrink: 0;
 }
 
-/* reuse status colors */
 .filterDot.status-0 { background: #6b7280; }
 .filterDot.status-1 { background: #16a34a; }
 .filterDot.status-2 { background: #2563eb; }
 .filterDot.status-3 { background: #ef4444; }
 
-/* keep label spacing */
 .filterLabel { white-space: nowrap; }
 
 @media (max-width: 1000px) {
@@ -809,7 +803,7 @@ body {
   justify-content: space-between;
   gap: 20px;
   background: rgba(255,255,255,0.06);
-  padding: 15px 15px 15px 28px; /* left padding to clear indicator */
+  padding: 15px 15px 15px 28px;
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.1);
 }

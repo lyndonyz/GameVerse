@@ -1,4 +1,3 @@
-/* add these rules to create a two-column dashboard layout */
 .dashboard-container {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -80,7 +79,6 @@
 .calendar-wrap { margin-top: 8px; }
 .selected-date { margin-top: 8px; color: var(--muted); font-size: 13px; }
 
-/* ensure pie is left and comments sit to the right with App-like card styling */
 .dashboard-main-row {
   display: flex;
   gap: 28px;
@@ -100,7 +98,6 @@
   gap: 18px;
 }
 
-/* comment card - formatted like App.jsx comment blocks (large horizontal cards) */
 .comment-box {
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.06);
@@ -114,7 +111,6 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.18);
 }
 
-/* title row */
 .comment-meta {
   display: flex;
   justify-content: space-between;
@@ -130,7 +126,6 @@
   font-size: 14px;
 }
 
-/* body */
 .comment-body {
   color: #fff;
   line-height: 1.35;
@@ -139,7 +134,6 @@
   white-space: pre-wrap;
 }
 
-/* small states */
 .comment-loading,
 .no-comments {
   color: var(--muted);
@@ -163,21 +157,18 @@
   color: var(--muted);
 }
 
-/* show maximum of ~5 comments at once; user can scroll through the rest */
 .comments-scroll {
-  max-height: 520px; /* ~5 items (adjust if your comment-box height changes) */
+  max-height: 520px;
   overflow-y: auto;
   padding-right: 6px;
 }
 
-/* small improvement: visual separator */
 .comments-column .comments-header {
   padding-bottom: 6px;
   border-bottom: 1px solid rgba(255,255,255,0.03);
   margin-bottom: 12px;
 }
 
-/* responsive */
 @media (max-width: 980px) {
   .dashboard-container {
     grid-template-columns: 1fr;

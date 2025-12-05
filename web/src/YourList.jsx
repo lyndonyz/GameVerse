@@ -144,7 +144,6 @@ function YourList() {
 
   useEffect(() => {
     loadList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loggedIn, user]);
 
   const normalize = (s) => (s || "").toString().trim().toLowerCase();
@@ -286,7 +285,6 @@ function YourList() {
               <ul className="yourListGrid">
                 {sortedGames.map((g, idx) => (
                   <li key={idx} className="yourListItem" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    {/* number column */}
                     <div
                       className="listNumber"
                       style={{
@@ -313,7 +311,6 @@ function YourList() {
                       />
                       <div>
                         <h3 className="yourListTitle" style={{ margin: 0 }}>{g.gameName || g.slug || "Unknown"}</h3>
-                        {/* removed smaller slug text per request */}
                       </div>
                     </div>
 

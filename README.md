@@ -35,7 +35,7 @@ Once done, you should be able to run the web application locally using:
 ```npm run dev```
 
 Its running Vite + React + Express.
-<br>If it doesn't work btw msg me guys: Luki
+<br>If it doesn't work btw msg me guys
 
 ## Using Visual Studio Code to Push Stuff
 
@@ -57,4 +57,4 @@ Message in the group chat if we are working on a specific file etc.
 I can't remember exactly how it works, but it should tell you when theres something to pull when in the branch tab. If not, before you do something on a file, make sure that you click the pull button (the solid arrow pointing to a circle) as well as the refresh button.
 
 Thats about it. Any questions, as before message me, 
-<br>Luki
+<br>

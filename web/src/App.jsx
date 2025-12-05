@@ -55,7 +55,7 @@ function App() {
       .slice(0, 5);
   }, [displayedResults]);
 
-  const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+  const CACHE_TTL = 1000 * 60 * 5;
   const latestDiscoverRef = useRef(0);
   const latestSearchRef = useRef(0);
 
@@ -513,7 +513,6 @@ function App() {
 
   return (
     <div className="layout">
-      {/* layout header */}
       <header className="header">
         <button className="hamburger" onClick={() => setMenuOpen(true)}>
           ☰
