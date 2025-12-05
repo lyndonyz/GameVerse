@@ -35,7 +35,7 @@ export default function AccountCreate() {
     e.preventDefault();
 
     setError("");
-    
+
     if (!gameCatalogActive && !isAdmin) {
       setError("Account creation is currently unavailable. The Game & Experience Catalog service is disabled.");
       return;
@@ -120,21 +120,6 @@ export default function AccountCreate() {
               textAlign: "center"
             }}>
               ⚠️ Account creation is currently unavailable
-            </div>
-          )}
-
-          {!gameCatalogActive && isAdmin && (
-            <div style={{
-              padding: "12px",
-              marginBottom: "15px",
-              backgroundColor: "rgba(255, 193, 7, 0.15)",
-              border: "1px solid rgba(255, 193, 7, 0.5)",
-              borderRadius: "8px",
-              color: "#ffc107",
-              fontSize: "0.9em",
-              textAlign: "center"
-            }}>
-              ⚠️ Game & Experience Catalog service is disabled. You can still create accounts as admin.
             </div>
           )}
 
