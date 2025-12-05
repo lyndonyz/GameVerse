@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 import "./App.css";
@@ -13,6 +13,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, user, logout } = useAuth();
+  // const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [calendarValue, setCalendarValue] = useState(new Date());
   const API_BASE_URL = "http://localhost:8000";
@@ -24,10 +25,55 @@ function Dashboard() {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
 
+  const [randomPicks, setRandomPicks] = useState([]);
+  const [loadingPicks, setLoadingPicks] = useState(false);
+
+  // user's saved games map (normalizedName -> status)
+  const [userGames, setUserGames] = useState({});
+
+  const normalizeName = (n) => (n || "").toString().trim().toLowerCase();
+
   useEffect(() => {
     const timerId = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timerId);
   }, []);
+
+  // load user's saved games map for add-button state
+  useEffect(() => {
+    if (!loggedIn || !user?.username) {
+      setUserGames({});
+      return;
+    }
+    (async () => {
+      try {
+        const url = `${API_BASE_URL}/auth/getAllGames`;
+        const r = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: user.username }),
+        });
+        const data = await r.json();
+        const items = Array.isArray(data.list) ? data.list : data.games || data.items || [];
+        const map = {};
+        (items || []).forEach((it) => {
+          const name =
+            it.gameName ||
+            it.game ||
+            it.name ||
+            it.title ||
+            it.slug ||
+            "";
+          const status = Number(it.status ?? 0);
+          const key = normalizeName(name);
+          if (key) map[key] = status;
+        });
+        setUserGames(map);
+      } catch (err) {
+        console.error("Failed to load user games", err);
+        setUserGames({});
+      }
+    })();
+  }, [loggedIn, user]);
 
   useEffect(() => {
     async function loadCounts() {
@@ -125,7 +171,211 @@ function Dashboard() {
     loadComments();
   }, [loggedIn, user]);
 
-  // delete comment handler
+  // extractable fetch routine so UI can refresh on-demand
+  async function fetchRandomPicks() {
+    setLoadingPicks(true);
+    try {
+      const shuffle = (arr) => {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      };
+      const uniqueById = (arr) => {
+        const seen = new Set();
+        return arr.filter((it) => {
+          const k = (it.id || it.slug || it.name || JSON.stringify(it)).toString();
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+      };
+      const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const randChoice = (a) => a[Math.floor(Math.random() * a.length)];
+
+      // try several randomized strategies (stop when we have a decent pool)
+      let pool = [];
+
+      // Strategy A: discover with random page and random ordering
+      try {
+        const page = randInt(1, 6); // random page within a small range
+        const pageSize = 100;
+        const ordering = randChoice(["", "rating", "-rating", "released", "-released"]);
+        const url = `/api/discover?page=${page}&page_size=${pageSize}${ordering ? `&ordering=${ordering}` : ""}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          pool = pool.concat(Array.isArray(data.results) ? data.results : Array.isArray(data) ? data : []);
+        }
+      } catch (e) {
+        console.warn("discover randomized fetch failed", e);
+      }
+
+      // Strategy B: randomized search fallback (random common term + random page + random year window)
+      if (pool.length < 20) {
+        try {
+          const commonTerms = ["game", "adventure", "action", "puzzle", "rpg", "quest", "arena", "world", "battle"];
+          const q = randChoice(commonTerms);
+          const page = randInt(1, 5);
+          const pageSize = 50;
+          // pick a random release year window to diversify results
+          const year = randInt(1990, new Date().getFullYear());
+          const releasedFrom = `${year}-01-01`;
+          const releasedTo = `${year}-12-31`;
+          const url = `/api/search?q=${encodeURIComponent(q)}&page=${page}&page_size=${pageSize}&releasedFrom=${releasedFrom}&releasedTo=${releasedTo}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            pool = pool.concat(Array.isArray(data.results) ? data.results : []);
+          }
+        } catch (e) {
+          console.warn("search randomized fetch failed", e);
+        }
+      }
+
+      // Strategy C: multi-term micro-queries (aggregate)
+      if (pool.length < 20) {
+        try {
+          const terms = ["indie", "multiplayer", "singleplayer", "strategy", "racing"];
+          const promises = terms.map((t) =>
+            fetch(`/api/search?q=${encodeURIComponent(t)}&page=1&page_size=12`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+          );
+          const settled = await Promise.allSettled(promises);
+          for (const s of settled) {
+            if (s.status === "fulfilled" && s.value && Array.isArray(s.value.results)) {
+              pool = pool.concat(s.value.results);
+            }
+          }
+        } catch (e) {
+          console.warn("multi-term fetch failed", e);
+        }
+      }
+
+      // Strategy D: last-resort RAWG random page
+      if (pool.length < 10) {
+        try {
+          const RAWG_KEY = process.env.REACT_APP_RAWG_API_KEY || "";
+          if (RAWG_KEY) {
+            // attempt to pick truly random page via RAWG meta
+            const metaRes = await fetch(`https://api.rawg.io/api/games?key=${encodeURIComponent(RAWG_KEY)}&page_size=1`);
+            if (metaRes.ok) {
+              const meta = await metaRes.json();
+              const total = Number(meta.count || 0) || 1000;
+              const pageSize = 5;
+              const totalPages = Math.max(1, Math.ceil(total / pageSize));
+              const page = randInt(1, Math.min(totalPages, 500)); // cap pages to avoid huge offsets
+              const res = await fetch(`https://api.rawg.io/api/games?key=${encodeURIComponent(RAWG_KEY)}&page_size=${pageSize}&page=${page}`);
+              if (res.ok) {
+                const data = await res.json();
+                pool = pool.concat(Array.isArray(data.results) ? data.results : []);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("RAWG fallback failed", e);
+        }
+      }
+
+      // normalize and pick 5 truly random unique items with extra randomness
+      pool = uniqueById(pool);
+      shuffle(pool);
+
+      // apply random modifiers to diversify (e.g. drop some by probability, prefer certain fields)
+      const modifiers = [
+        (g) => g, // identity
+        (g) => (g.rating && Math.random() < 0.7 ? g : null), // prefer rated sometimes
+        (g) => (g.released && Math.random() < 0.6 ? g : null),
+        (g) => g, // noop
+      ];
+      // map with some mods applied and filter out nulls
+      const modified = pool
+        .map((g) => (Math.random() < 0.35 ? modifiers[Math.floor(Math.random() * modifiers.length)](g) : g))
+        .filter(Boolean);
+
+      // final shuffle and take up to 5
+      shuffle(modified);
+      const picks = modified.slice(0, 5);
+
+      setRandomPicks(picks);
+    } catch (err) {
+      console.error("Failed to load random picks:", err);
+      setRandomPicks([]);
+    } finally {
+      setLoadingPicks(false);
+    }
+  }
+
+  useEffect(() => {
+    if (loggedIn) fetchRandomPicks();
+  }, [loggedIn]);
+
+  // add to user's list (copied/adapted from App.jsx)
+  async function handleAddToList(game) {
+    if (!loggedIn || !user) {
+      alert("Please log in to save games.");
+      return;
+    }
+
+    const name = game.name || game.gameName || game.title || game.slug || "";
+    const image = game.image || game.background_image || game.backgroundImage || game.image_url || "";
+    const slug = game.slug || game.id || "";
+
+    try {
+      const r = await fetch(`${API_BASE_URL}/auth/addGameToList`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: user.username,
+          gameName: name,
+          image,
+          slug,
+          status: 0
+        })
+      });
+
+      const data = await r.json();
+      if (data.error === "GAME_ALREADY_EXISTS") {
+        alert("This game is already in your list.");
+        return;
+      }
+      if (!data.success) {
+        console.error("ADD GAME ERROR:", data);
+        alert("Failed to add game.");
+        return;
+      }
+
+      // update local map
+      setUserGames((prev) => ({ ...prev, [normalizeName(name)]: 0 }));
+    } catch (err) {
+      console.error("ADD GAME ERROR:", err);
+      alert("Network error while adding game.");
+    }
+  }
+
+  // status change for a saved game from picks UI
+  async function handleStatusChangeFromPick(game, newStatus) {
+    if (!loggedIn || !user) return;
+    const name = game.name || game.gameName || game.title || game.slug || "";
+    try {
+      await fetch(`${API_BASE_URL}/auth/updateGameStatus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: user.username,
+          gameName: name,
+          newStatus: Number(newStatus),
+          slug: game.slug || game.id || undefined,
+        }),
+      });
+      setUserGames((prev) => ({ ...prev, [normalizeName(name)]: Number(newStatus) }));
+    } catch (err) {
+      console.error("Failed to update status", err);
+      alert("Failed to update status.");
+    }
+  }
+
+  // delete comment handler (re-added)
   async function handleDeleteComment(id) {
     if (!id) return;
     const ok = window.confirm("Delete this comment? This action cannot be undone.");
@@ -136,17 +386,26 @@ function Dashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-      const payload = await res.json();
-      if (!res.ok || payload?.success === false) {
-        const errMsg = payload?.error || payload?.message || "Delete failed";
-        alert("Failed to delete comment: " + errMsg);
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "<no body>");
+        console.error("deleteComment bad response", res.status, res.statusText, text);
+        alert(`Delete failed: ${res.status} ${res.statusText}\n${text}`);
         return;
       }
+
+      const payload = await res.json().catch(() => null);
+      if (!payload || payload.success === false) {
+        console.error("deleteComment payload error", payload);
+        alert("Failed to delete comment: " + (payload?.error || payload?.message || "unknown"));
+        return;
+      }
+
       // remove from UI
       setComments((prev) => prev.filter((c) => String(c.id) !== String(id)));
     } catch (err) {
-      console.error("delete comment error", err);
-      alert("Failed to delete comment (network error)");
+      console.error("delete comment network error:", err);
+      alert("Failed to delete comment (network error). Check server/network.");
     }
   }
 
@@ -271,6 +530,73 @@ function Dashboard() {
                     {commentsContent}
                   </div>
                 </div>
+              </div>
+
+              <div className="random-picks-section" style={{ marginTop: 24 }}>
+                <div className="section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div className="section-title" style={{ fontWeight: 700 }}>Random Game Picks</div>
+                  <button className="btn btn-sm" onClick={() => fetchRandomPicks()} style={{ paddingLeft: 12, paddingRight: 12 }}>
+                    Refresh
+                  </button>
+                </div>
+
+                {loadingPicks ? (
+                  <div className="random-picks-loading">Loading picks…</div>
+                ) : randomPicks.length === 0 ? (
+                  <div className="no-random-picks">No game picks available.</div>
+                ) : (
+                  <ul className="list">
+                    {randomPicks.map((g, idx) => {
+                      const name = g.name || g.title || g.gameName || g.slug || "Untitled";
+                      const key = g.id || g.slug || `${name}-${idx}`;
+                      const img = g.image || g.background_image || g.backgroundImage || g.image_url || "";
+                      const rating = g.rating ?? g.score ?? g.rtg ?? null;
+                      const inList = loggedIn && userGames[normalizeName(name)] != null;
+
+                      return (
+                        <li key={key} className="row">
+                          <div className="rank">{idx + 1}</div>
+
+                          <div className="addBtnWrapper">
+                            {inList ? (
+                              <select
+                                value={String(userGames[normalizeName(name)])}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => handleStatusChangeFromPick(g, e.target.value)}
+                                title="Change status"
+                              >
+                                <option value="0">Plan to Play</option>
+                                <option value="1">Playing</option>
+                                <option value="2">Completed</option>
+                                <option value="3">Dropped</option>
+                              </select>
+                            ) : (
+                              <button
+                                className="addBtn"
+                                onClick={() => handleAddToList(g)}
+                                title="Add to your list"
+                              >
+                                +
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="cover" role="button" tabIndex={0} style={{ cursor: "default" }}>
+                            {img ? <img loading="lazy" src={img} alt={name} /> : <div className="placeholder">No Image</div>}
+                          </div>
+
+                          <div className="meta">
+                            <div className="title">{name}</div>
+                            <div className="sub">
+                              <span className="badge">★ {rating ?? "—"}</span>
+                              <span className="badge">📅 {g.released || g.releaseDate || "—"}</span>
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
             </>
           )}
