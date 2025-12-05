@@ -472,6 +472,52 @@ body {
   margin-top: 4px;
 }
 
+/* status filter bar above the list */
+.statusFilterBar {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+.statusFilterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.statusFilterBtn:hover { opacity: 0.95; }
+
+.statusFilterBtn.active {
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+}
+
+/* small colored dot inside filter button */
+.filterDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* reuse status colors */
+.filterDot.status-0 { background: #6b7280; }
+.filterDot.status-1 { background: #16a34a; }
+.filterDot.status-2 { background: #2563eb; }
+.filterDot.status-3 { background: #ef4444; }
+
+/* keep label spacing */
+.filterLabel { white-space: nowrap; }
+
 @media (max-width: 1000px) {
   .main {
     grid-template-columns: 1fr;
@@ -757,12 +803,13 @@ body {
 }
 
 .yourListItem {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   background: rgba(255,255,255,0.06);
-  padding: 15px;
+  padding: 15px 15px 15px 28px; /* left padding to clear indicator */
   border-radius: 12px;
   border: 1px solid rgba(255,255,255,0.1);
 }
@@ -919,3 +966,32 @@ select.statusSelect[value="3"] { color: #b91c1c; }
     font-size: 13px;
   }
 }
+
+.yourListItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: rgba(255,255,255,0.06);
+  padding: 15px 15px 15px 28px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.statusIndicator {
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  bottom: 8px;
+  width: 8px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.12) inset;
+  transition: background-color 180ms ease;
+  flex-shrink: 0;
+}
+
+.status-0 { background: #6b7280; }
+.status-1 { background: #16a34a; }
+.status-2 { background: #2563eb; }
+.status-3 { background: #ef4444; }
