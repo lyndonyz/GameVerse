@@ -10,6 +10,7 @@ const {
   getUsernameById,
   userExists
 } = require("../db/userDB");
+const commentDB = require("../db/commentDB");
 
 // Login handler
 router.post("/login", async (req, res) => {
@@ -225,5 +226,38 @@ router.post("/getAllGames", async (req, res) => {
   res.json({ success: true, list });
 });
 
+// return all comments (existing route)
+router.post("/getAllComments", async (req, res) => {
+  try {
+    const comments = await commentDB.getAllComments();
+    if (!comments) return res.status(500).json({ success: false, error: "DB_ERROR" });
+    return res.json({ success: true, comments });
+  } catch (err) {
+    console.error("GET ALL COMMENTS ERROR:", err);
+    return res.status(500).json({ success: false, error: "SERVER_ERROR" });
+  }
+});
+
+// NEW: delete a comment by id (server will look up rev and delete)
+router.post("/deleteComment", async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ success: false, error: "MISSING_ID" });
+
+    // try to load the comment document to obtain _rev (or any needed metadata)
+    const doc = await commentDB.getCommentById(id);
+    if (!doc) return res.status(404).json({ success: false, error: "NOT_FOUND" });
+
+    const rev = doc._rev || doc._metadata?.rev || null;
+    // if deleteComment requires rev, pass it; deleteComment implementation will validate
+    const result = await commentDB.deleteComment(id, rev);
+    if (!result) return res.status(500).json({ success: false, error: "DELETE_FAILED" });
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("DELETE COMMENT ERROR:", err);
+    return res.status(500).json({ success: false, error: "SERVER_ERROR" });
+  }
+});
 
 module.exports = router;
