@@ -1,14 +1,18 @@
-# GameVerse
+# How to Run GameVerse Locally:
 ## GameVerse Web Application for Software Architecture 
 
-Node Version: v24.11.0.<br>Make sure you have Visual Studio Code.
+Node Version: v24.11.0.<br>Make sure you have [Visual Studio Code](https://code.visualstudio.com/).
 
-## For WINDOWS: 
-Use Chocolatey v2.5.1.
-<br>Read how to install Chocolatey on their official documentation for proper installation of node.js
-<br>Ensure you have node installed.
+## Step For WINDOWS: 
+Use Chocolatey v2.5.1. for consistency with this documentation. Otherwise if you can set it up without it, you can continue.
+<br>Read how to install Chocolatey on their [official documentation](https://chocolatey.org/install) for proper installation of node.js
 
-Check using:
+## Step For MacOS: 
+You can install Node.js on a Mac by downloading the official installer from the [Node.js website](https://nodejs.org/en), or by using the Homebrew package manager.
+
+## Next steps: 
+Ensure you have node installed.
+<br>Check using:
 ```node -v```
 <br>Also check if npm is working and check:
 ```npm -v```
@@ -34,9 +38,14 @@ Once you clone the repo, navigate into **GameVerse** folder.
 Once done, you should be able to run the web application locally using: 
 ```npm run dev```
 
-Its running Vite + React + Express.
-<br>---
+# Notes on How our Code is Ran/Managed.
+It's running Vite + React + Express.
+<br>User and Comment Databases are ran remotely via IBM Cloud Databses.
+<br>The service registry is controlled by our Admin account, which enables us to manually turn on/off microservices.
+<br>Our User passwords are encrypted by bcrypt.
+<br>Both our backend and frontend are ran on IBM Cloud and deployed using both Docker and IBM Cloud CE.
 
+# How to Push and Pull GameVerse Repo:
 ## Using Visual Studio Code to Push Stuff
 
 I think it should be pretty obvious, but I'll write this just in case.
@@ -55,6 +64,4 @@ Message in the group chat if we are working on a specific file etc.
 ## Using Visual Studio Code to Pull Stuff
 
 I can't remember exactly how it works, but it should tell you when theres something to pull when in the branch tab. If not, before you do something on a file, make sure that you click the pull button (the solid arrow pointing to a circle) as well as the refresh button.
-
-Thats about it. Any questions, as before message me.
 <br>
