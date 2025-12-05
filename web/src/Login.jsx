@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 import { useServiceStatus } from "./useServiceStatus.js";
@@ -6,7 +6,7 @@ import "./Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { setLoggedIn, setUser, user } = useAuth();
+  const { setLoggedIn, setUser, user, loggedIn } = useAuth();
   const { isServiceActive, isServiceActiveAndLoaded, loading: servicesLoading } = useServiceStatus();
   
   // For navigation, use isServiceActiveAndLoaded to hide while loading
@@ -16,6 +16,7 @@ export default function Login() {
   // For UI elements (if any in future), use isServiceActive for immediate response
   const analyticsActive = isServiceActive("Analytics & Visualization");
   const userLibraryActive = isServiceActive("User Library");
+  const gameCatalogActive = isServiceActive("Game & Experience Catalog");
   
   const isAdmin = user?.username?.toLowerCase() === "admin";
   const API_BASE_URL =
@@ -24,6 +25,13 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Redirect to home if already logged in
+  useEffect(() => {
+    if (loggedIn) {
+      navigate("/");
+    }
+  }, [loggedIn, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -128,13 +136,15 @@ export default function Login() {
           </nav>
         )}
         <div className="drawerAuthFooter">
-          <Link
-            to="/register"
-            className="drawerLoginBtn"
-            onClick={() => setMenuOpen(false)}
-          >
-            Create Account
-          </Link>
+          {(gameCatalogActive || isAdmin) && (
+            <Link
+              to="/register"
+              className="drawerLoginBtn"
+              onClick={() => setMenuOpen(false)}
+            >
+              Create Account
+            </Link>
+          )}
         </div>
       </div>
       {menuOpen && (

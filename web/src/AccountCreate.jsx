@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useServiceStatus } from "./useServiceStatus.js";
 import { useAuth } from "./AuthContext.jsx";
@@ -8,7 +8,7 @@ export default function AccountCreate() {
   const API_BASE_URL =
     "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loggedIn } = useAuth();
   const { isServiceActive, isServiceActiveAndLoaded, loading: servicesLoading } = useServiceStatus();
   
   // For navigation, use isServiceActiveAndLoaded to hide while loading
@@ -18,6 +18,7 @@ export default function AccountCreate() {
   // For UI elements (if any in future), use isServiceActive for immediate response
   const analyticsActive = isServiceActive("Analytics & Visualization");
   const userLibraryActive = isServiceActive("User Library");
+  const gameCatalogActive = isServiceActive("Game & Experience Catalog");
   
   const isAdmin = user?.username?.toLowerCase() === "admin";
 
@@ -27,10 +28,23 @@ export default function AccountCreate() {
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Redirect to home if already logged in
+  useEffect(() => {
+    if (loggedIn) {
+      navigate("/");
+    }
+  }, [loggedIn, navigate]);
+
   const handleRegister = async (e) => {
     e.preventDefault();
 
     setError("");
+
+    // Check if Game & Experience Catalog service is active (admins bypass)
+    if (!gameCatalogActive && !isAdmin) {
+      setError("Account creation is currently unavailable. The Game & Experience Catalog service is disabled.");
+      return;
+    }
 
     if (!username.trim() || !password.trim()) {
       setError("Please enter both a username and a password.");
@@ -99,6 +113,36 @@ export default function AccountCreate() {
         <div className="loginBox">
           <h1>Create Account</h1>
 
+          {!gameCatalogActive && !isAdmin && (
+            <div style={{
+              padding: "12px",
+              marginBottom: "15px",
+              backgroundColor: "rgba(255, 193, 7, 0.15)",
+              border: "1px solid rgba(255, 193, 7, 0.5)",
+              borderRadius: "8px",
+              color: "#ffc107",
+              fontSize: "0.9em",
+              textAlign: "center"
+            }}>
+              ⚠️ Account creation is currently unavailable
+            </div>
+          )}
+
+          {!gameCatalogActive && isAdmin && (
+            <div style={{
+              padding: "12px",
+              marginBottom: "15px",
+              backgroundColor: "rgba(255, 193, 7, 0.15)",
+              border: "1px solid rgba(255, 193, 7, 0.5)",
+              borderRadius: "8px",
+              color: "#ffc107",
+              fontSize: "0.9em",
+              textAlign: "center"
+            }}>
+              ⚠️ Game & Experience Catalog service is disabled. You can still create accounts as admin.
+            </div>
+          )}
+
           <p
             className="loginHint"
             style={{
@@ -148,7 +192,15 @@ export default function AccountCreate() {
               style={{ marginTop: "0px" }}
             />
 
-            <button className="loginBtn" type="submit">
+            <button 
+              className="loginBtn" 
+              type="submit"
+              disabled={!gameCatalogActive && !isAdmin}
+              style={{
+                opacity: (!gameCatalogActive && !isAdmin) ? 0.5 : 1,
+                cursor: (!gameCatalogActive && !isAdmin) ? 'not-allowed' : 'pointer'
+              }}
+            >
               Register
             </button>
           </form>
