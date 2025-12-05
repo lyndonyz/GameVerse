@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
 import "./App.css";
@@ -7,52 +7,56 @@ import "./dashboard.css";
 function YourList() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, user, logout } = useAuth();
-
-  const API_BASE_URL =
-    "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
-
+  const API_BASE_URL = "http://localhost:8000";
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState(null);
+  const statusLabels = ["Plan to Play", "Playing", "Completed", "Dropped"];
 
-  // helper: try to enrich a saved game entry with site search results (id, image, slug, name)
   async function enrichSavedGames(savedList) {
     if (!Array.isArray(savedList) || savedList.length === 0) return [];
-    // limit concurrent lookups to avoid spamming server - perform in parallel here but could be batched
-    const lookups = savedList.map(async (item) => {
-      const query = item.slug || item.gameName || "";
-      if (!query) return { ...item, image: item.image || "", id: item.id || null };
-      try {
-        const r = await fetch(
-          `/api/search?q=${encodeURIComponent(query)}&page=1&page_size=3`
-        );
-        const data = await r.json();
-        const results = Array.isArray(data.results) ? data.results : [];
-        // prefer slug match, then exact name, then first result
-        const norm = (s) => (typeof s === "string" ? s.trim().toLowerCase() : "");
-        const targetSlug = norm(item.slug);
-        const targetName = norm(item.gameName);
-        let match =
-          results.find((res) => targetSlug && norm(res.slug) === targetSlug) ||
-          results.find((res) => targetName && norm(res.name) === targetName) ||
-          results[0] ||
-          null;
-        return {
-          ...item,
-          id: item.id || (match ? match.id : null),
-          image: item.image || (match ? match.image || match.background_image : "") || "",
-          slug: item.slug || (match ? match.slug : ""),
-          gameName: item.gameName || (match ? match.name : "") || "",
-        };
-      } catch (err) {
-        console.error("Enrich lookup failed for", query, err);
-        return { ...item, image: item.image || "", id: item.id || null };
-      }
-    });
+    const CONCURRENCY = 5;
+    const results = [];
+    const norm = (s) => (typeof s === "string" ? s.trim().toLowerCase() : "");
 
-    return Promise.all(lookups);
+    for (let i = 0; i < savedList.length; i += CONCURRENCY) {
+      const chunk = savedList.slice(i, i + CONCURRENCY);
+      const promises = chunk.map(async (item) => {
+        const query = item.slug || item.gameName || "";
+        if (!query) return { ...item, image: item.image || "", id: item.id || null };
+        try {
+          const r = await fetch(
+            `/api/search?q=${encodeURIComponent(query)}&page=1&page_size=3`
+          );
+          const data = await r.json();
+          const siteResults = Array.isArray(data.results) ? data.results : [];
+          const targetSlug = norm(item.slug);
+          const targetName = norm(item.gameName);
+          const match =
+            siteResults.find((res) => targetSlug && norm(res.slug) === targetSlug) ||
+            siteResults.find((res) => targetName && norm(res.name) === targetName) ||
+            siteResults[0] ||
+            null;
+          return {
+            ...item,
+            id: item.id || (match ? match.id : null),
+            image: item.image || (match ? match.image || match.background_image : "") || "",
+            slug: item.slug || (match ? match.slug : ""),
+            gameName: item.gameName || (match ? match.name : "") || "",
+            status: typeof item.status === "number" ? item.status : Number(item.status || 0),
+          };
+        } catch (err) {
+          console.error("Enrich lookup failed for", query, err);
+          return { ...item, image: item.image || "", id: item.id || null, status: Number(item.status || 0) };
+        }
+      });
+      const chunkRes = await Promise.all(promises);
+      results.push(...chunkRes);
+    }
+
+    return results;
   }
 
-  // Load saved games
   useEffect(() => {
     async function loadList() {
       if (!loggedIn || !user) {
@@ -70,9 +74,17 @@ function YourList() {
         const data = await r.json();
 
         if (data.success && Array.isArray(data.list)) {
-          // enrich each saved entry with site game metadata (image, id, slug, name)
-          const enriched = await enrichSavedGames(data.list);
-          setGames(enriched);
+          const immediate = data.list.map((item) => ({
+            ...item,
+            image: item.image || "",
+            gameName: item.gameName || item.name || "",
+            id: item.id || null,
+            status: typeof item.status === "number" ? item.status : Number(item.status || 0),
+          }));
+          setGames(immediate);
+          enrichSavedGames(data.list)
+            .then((enriched) => setGames(enriched))
+            .catch((err) => console.error("Background enrich failed:", err));
         } else {
           setGames([]);
         }
@@ -87,41 +99,113 @@ function YourList() {
     loadList();
   }, [loggedIn, user]);
 
-  // Update status
-  async function updateStatus(gameName, newStatus) {
+  const normalize = (s) => (s || "").toString().trim().toLowerCase();
+
+  const sortedGames = useMemo(() => {
+    if (filterStatus === null) {
+      return [...games].sort((a, b) => {
+        const na = normalize(a.gameName || a.name || a.slug || "");
+        const nb = normalize(b.gameName || b.name || b.slug || "");
+        if (na < nb) return -1;
+        if (na > nb) return 1;
+        return 0;
+      });
+    }
+
+    const selected = Number(filterStatus);
+    const fallbackOrder = [1, 2, 3, 0];
+    const order = [selected, ...fallbackOrder.filter((s) => s !== selected)];
+    const groups = order.map(() => []);
+    const other = [];
+    for (const g of games) {
+      const s = Number(g.status ?? 0);
+      const idx = order.indexOf(s);
+      if (idx === -1) other.push(g);
+      else groups[idx].push(g);
+    }
+    return groups.flat().concat(other);
+  }, [games, filterStatus]);
+
+  async function updateStatus(gameOrName, newStatus) {
+    const identifier =
+      typeof gameOrName === "object" && gameOrName !== null
+        ? gameOrName.gameName || gameOrName.slug || gameOrName.id || ""
+        : gameOrName || "";
+
+    if (!identifier) {
+      console.error("No identifier provided to updateStatus", gameOrName);
+      return;
+    }
+
+    const matched = games.find(
+      (item) =>
+        normalize(item.gameName) === normalize(identifier) ||
+        normalize(item.slug) === normalize(identifier) ||
+        String(item.id) === String(identifier)
+    );
+
+    if (!matched) {
+      console.warn("No matching saved game found for identifier:", identifier);
+    }
+
+    const matchKey = matched ? matched.gameName : identifier;
+    const prevGames = games;
+    setGames((prev) =>
+      prev.map((itm) =>
+        normalize(itm.gameName) === normalize(matchKey) ||
+        normalize(itm.slug) === normalize(matchKey) ||
+        String(itm.id) === String(matchKey)
+          ? { ...itm, status: Number(newStatus) }
+          : itm
+      )
+    );
+
     try {
-      await fetch(`${API_BASE_URL}/auth/updateGameStatus`, {
+      const res = await fetch(`${API_BASE_URL}/auth/updateGameStatus`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: user.username,
-          gameName,
-          newStatus: Number(newStatus)
-        })
+          gameName: matched ? matched.gameName : identifier,
+          slug: matched ? matched.slug || undefined : undefined,
+          newStatus: Number(newStatus),
+        }),
       });
 
-      // Update UI
-      setGames((prev) =>
-        prev.map((g) =>
-          g.gameName === gameName
-            ? { ...g, status: Number(newStatus) }
-            : g
-        )
-      );
+      console.debug("updateGameStatus response status:", res.status);
+      const data = await res.json().catch(() => ({}));
+      console.debug("updateGameStatus response body:", data);
+      if (!res.ok || (data && data.success === false) || data.error) {
+        console.error("Failed to update status on server:", data);
+        setGames(prevGames);
+        alert("Failed to update status. Try again.");
+        return;
+      }
+
+      const reloadRes = await fetch(`${API_BASE_URL}/auth/getAllGames`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user.username }),
+      });
+      const reloadData = await reloadRes.json().catch(() => ({}));
+      if (reloadData.success && Array.isArray(reloadData.list)) {
+        const enriched = await enrichSavedGames(reloadData.list);
+        setGames(enriched);
+      }
     } catch (err) {
       console.error("STATUS UPDATE ERROR:", err);
+      setGames(prevGames);
+      alert("Error updating status. Check console for details.");
     }
   }
 
   return (
     <div className="layout">
-      {/* HEADER */}
       <header className="header">
         <button className="hamburger" onClick={() => setMenuOpen(true)}>☰</button>
         <div className="brand">GAMEVERSE</div>
       </header>
 
-      {/* MAIN */}
       <main className="main yourListMain">
         {!loggedIn ? (
           <div className="loginPromptContainer">
@@ -134,63 +218,56 @@ function YourList() {
           <>
             <h1>Your Games List, {user?.username}</h1>
 
-            {/* DEBUG: show raw games storage so you can inspect how entries are stored */}
-            <div style={{ margin: "12px 0" }}>
-              <h4>Raw games state (debug)</h4>
-              <pre
-                style={{
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  maxHeight: 300,
-                  overflow: "auto",
-                  background: "#f8f8f8",
-                  padding: 8,
-                  borderRadius: 4,
-                }}
-              >
-                {JSON.stringify(games, null, 2)}
-              </pre>
+            <div className="statusFilterBar">
+              {statusLabels.map((label, i) => (
+                <button
+                  key={i}
+                  className={`statusFilterBtn ${filterStatus === i ? "active" : ""}`}
+                  onClick={() => setFilterStatus(filterStatus === i ? null : i)}
+                  aria-pressed={filterStatus === i}
+                >
+                  <span className={`filterDot status-${i}`} />
+                  <span className="filterLabel">{label}</span>
+                </button>
+              ))}
             </div>
 
-            {games.length === 0 ? (
+            {sortedGames.length === 0 ? (
               <p>You have not added any games yet.</p>
             ) : (
               <ul className="yourListGrid">
-                {games.map((g, idx) => (
+                {sortedGames.map((g, idx) => (
                   <li key={idx} className="yourListItem">
+                    <div className={`statusIndicator status-${String(g.status ?? 0)}`} />
 
-  {/* IMAGE LEFT */}
-  <img
-    className="yourListImg"
-    src={g.image || ""}
-    alt={g.gameName || "Game"}
-  />
+                    <div className="yourListLeft" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <img
+                        className="yourListImg"
+                        src={g.image || ""}
+                        alt={g.gameName || "Game"}
+                        loading="lazy"
+                        style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 6 }}
+                      />
+                      <div>
+                        <h3 className="yourListTitle" style={{ margin: 0 }}>{g.gameName || g.slug || "Unknown"}</h3>
+                        {g.slug && <p className="yourListSlug" style={{ margin: "4px 0 0", fontSize: 12 }}>{g.slug}</p>}
+                      </div>
+                    </div>
 
-  {/* GAME INFO CENTER */}
-  <div className="yourListInfo">
-    <h3 className="yourListTitle">{g.gameName}</h3>
-    {g.slug && <p className="yourListSlug">{g.slug}</p>}
-    {/* link to game page if we have an id */}
-    {g.id ? (
-      <Link to={`/game/${g.id}`} className="btn small">View</Link>
-    ) : null}
-  </div>
+                    <div className="yourListStatusRight">
+                      <label>Status: </label>
+                      <select
+                        value={String(g.status ?? 0)}
+                        onChange={(e) => updateStatus(g, e.target.value)}
+                      >
+                        <option value="0">Plan to Play</option>
+                        <option value="1">Playing</option>
+                        <option value="2">Completed</option>
+                        <option value="3">Dropped</option>
+                      </select>
+                    </div>
 
-  {/* STATUS DROPDOWN RIGHT */}
-  <div className="yourListStatusRight">
-    <label>Status: </label>
-    <select
-      value={g.status ?? 0}
-      onChange={(e) => updateStatus(g.gameName, e.target.value)}
-    >
-      <option value="0">Plan to Play</option>
-      <option value="1">Playing</option>
-      <option value="2">Completed</option>
-      <option value="3">Dropped</option>
-    </select>
-  </div>
-
-</li>
+                  </li>
                 ))}
               </ul>
             )}
@@ -198,7 +275,6 @@ function YourList() {
         )}
       </main>
 
-      {/* SIDEBAR */}
       <div className={`leftDrawer ${menuOpen ? "open" : ""}`}>
         <button className="drawerClose" onClick={() => setMenuOpen(false)}>✕</button>
         <nav className="drawerMenu">
