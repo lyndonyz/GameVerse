@@ -1,8 +1,11 @@
+
 const {
     getMicroservice,
     getStatus,
     updateServiceStatus
 } = require("./serviceRegistryDB");
+
+
 
 const MICROSERVICES = {
     SEARCH_CATEGORY: "Search & Category Filter",
@@ -12,6 +15,9 @@ const MICROSERVICES = {
     FEEDBACK: "User Feedback & Rating Service",
 };
 
+let serviceStatusCache = {};
+let listenerActive = false;
+
 async function initializeAllServices() {
     (async () => {
         await new Promise (res => setTimeout(res, 1000));
@@ -20,13 +26,78 @@ async function initializeAllServices() {
         for (const key in MICROSERVICES) {
             const name = MICROSERVICES[key];
             const status = await getStatus(name);
+            const numeric = Number(status);
+            serviceStatusCache[name] = numeric;
             console.log(`-> ${name}: ${Number(status) == 1 ? "ACTIVE" : "INACTIVE"}` );
         }
         console.log("Service Registry Initialization Complete.");
+        startActiveListener();
     })();
     
 }
 
+function startActiveListener() {
+if (listenerActive) return;
+listenerActive = true;
+
+
+console.log("\nStarting Active Service Listener...\n");
+
+
+setInterval(async () => {
+    for (const key in MICROSERVICES) {
+        const name = MICROSERVICES[key];
+        const currentStatus = Number(await getStatus(name));
+        const previousStatus = serviceStatusCache[name];
+
+
+        if (currentStatus !== previousStatus) {
+            console.log(`Detected status change for ${name}: ${previousStatus} -> ${currentStatus}`);
+            serviceStatusCache[name] = currentStatus;
+
+
+            if (currentStatus === 1) {
+                await turnOnService(name);
+            } else {
+                await turnOffService(name);
+            }
+            }
+        }
+    }, 9000 + Math.random() * 2000); 
+}
+
+
+
+async function turnOnService(name) {
+switch (name) {
+    case MICROSERVICES.SEARCH_CATEGORY:
+        return await turnOnSearchCategory();
+    case MICROSERVICES.USER_LIBRARY:
+        return await turnOnUserLibrary();
+    case MICROSERVICES.GAME_CATALOG:
+        return await turnOnGameCatalog();
+    case MICROSERVICES.ANALYTICS:
+        return await turnOnAnalytics();
+    case MICROSERVICES.FEEDBACK:
+        return await turnOnFeedbackService();
+    }
+}
+
+
+async function turnOffService(name) {
+switch (name) {
+    case MICROSERVICES.SEARCH_CATEGORY:
+        return await turnOffSearchCategory();
+    case MICROSERVICES.USER_LIBRARY:
+        return await turnOffUserLibrary();
+    case MICROSERVICES.GAME_CATALOG:
+        return await turnOffGameCatalog();
+    case MICROSERVICES.ANALYTICS:
+        return await turnOffAnalytics();
+    case MICROSERVICES.FEEDBACK:
+        return await turnOffFeedbackService();
+    }
+}
 
 async function setServiceStatus(serviceName, status) {
     const updated = await updateServiceStatus(serviceName, status);
@@ -65,10 +136,18 @@ async function turnOnSearchCategory() {
 /* USER LIBRARY */
 async function turnOffUserLibrary() {
     await setServiceStatus(MICROSERVICES.USER_LIBRARY, 0);
+    // if (auth?.logout) {
+    //     console.log("User Library turned OFF → Logging user out...");
+    //     auth.logout();
+    // }
     placeholderAction(MICROSERVICES.USER_LIBRARY);
 }
 async function turnOnUserLibrary() {
     await setServiceStatus(MICROSERVICES.USER_LIBRARY, 1);
+    // if (auth?.setLoggedIn) {
+    //     console.log("User Library turned ON → Logging user in...");
+    //     auth.setLoggedIn(true);
+    // }
     placeholderAction(MICROSERVICES.USER_LIBRARY);
 }
 
@@ -120,6 +199,5 @@ module.exports = {
 
     turnOffFeedbackService,
     turnOnFeedbackService,
-
     MICROSERVICES
 };

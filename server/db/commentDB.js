@@ -7,9 +7,9 @@ const { RetrySystem } = require("./retrySystem");
 // ------------------
 const retrySystemInstance = new RetrySystem({
     retry: {
-        maxRetries: 5,
+        maxRetries: 10,
         minimumDelay: 200,
-        maxDelay: 3000
+        maxDelay: 5000
     },
     failureType: "comment_db_fail"
 });
