@@ -6,6 +6,7 @@ const retrySystemInstance = new RetrySystem({
     minimumDelay: 200,
     maxDelay: 2500,
   },
+  failureType: "game_api_fail"
 });
 
 async function retryFetch(url, options = {}) {

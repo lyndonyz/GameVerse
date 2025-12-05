@@ -18,6 +18,13 @@ const {
   deleteComment
 } = require("./db/commentDB");
 
+const registry = require("./db/serviceRegistry");
+
+(async () => {
+    await registry.initializeAllServices();
+})();
+
+
 
 app.use(cors());
 app.use(express.json());

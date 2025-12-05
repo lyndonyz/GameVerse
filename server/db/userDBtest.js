@@ -28,7 +28,6 @@ function logSection(name) {
 }
 
 (async () => {
-console.log(await addGameToList("Josh", "t_gameId2", "t_image", "t_slug", 3));
 
   logSection("USER TESTS START");
 
@@ -167,6 +166,7 @@ console.log(await addGameToList("Josh", "t_gameId2", "t_image", "t_slug", 3));
   // ============
   // DELETE USER
   // ============
+  //await new Promise (res => setTimeout(res, 15000));
 
   logSection("List All Users");
   await listUsers();

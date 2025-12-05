@@ -6,17 +6,23 @@ const { RetrySystem } = require("./retrySystem");
 // ------------------
 const retrySystemInstance = new RetrySystem({
     retry: {
-        maxRetries: 5,      
-        minimumDelay: 300,  
-        maxDelay: 3000  
+        maxRetries: 5,
+        minimumDelay: 300,
+        maxDelay: 3000
     },
+    failureType: "user_db_fail",
 });
 // ------------------
 // username -> Id
 // ------------------
 async function getUserId(username) { 
+    try {
     const user = await getUserByUsername(username)
     return user?._id || null;
+    } catch (err) {
+        console.log(err.message);
+        return false;
+    }
 }
 
 
@@ -24,8 +30,13 @@ async function getUserId(username) {
 // id -> Username
 // ------------------
 async function getUsernameById(id) {
+    try{
     const user = await getUserById(id);
     return user?.username || null;
+    } catch (err) {
+        console.log(err.message);
+        return false;
+    }
 }
 
 
@@ -131,8 +142,13 @@ async function getUserById(id) {
 // Get Email
 // ------------------
 async function getEmail(username) {
+    try {
     const user = await getUserByUsername(username);
     return user?.email || null;
+    } catch (err) {
+        console.log(err.message);
+        return false;
+    }
 }
 
 
@@ -151,7 +167,8 @@ async function getUserByUsername(_username) {
         );
         return response.result.docs[0] || null;
     } catch (err) {
-        throw err;
+        console.log(err.message);
+        return null;
     }
 }
 

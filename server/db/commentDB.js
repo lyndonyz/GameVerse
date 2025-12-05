@@ -11,6 +11,7 @@ const retrySystemInstance = new RetrySystem({
         minimumDelay: 200,
         maxDelay: 3000
     },
+    failureType: "comment_db_fail"
 });
 
 // ------------------
