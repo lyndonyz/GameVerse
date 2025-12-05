@@ -136,7 +136,7 @@ function ServiceRegistry() {
             {Object.entries(services).map(([serviceName, status]) => (
               <div key={serviceName} className="service-card">
                 <div className="service-header">
-                  <h3>{serviceName === "Game & Experience Catalog" ? "Game & Experience Catalog (User Creation)" : serviceName}</h3>
+                  <h3>{serviceName === "Game & Experience Catalog" ? "User Creation" : serviceName}</h3>
                   <span className={`status-badge ${status === 1 ? "active" : "inactive"}`}>
                     {status === 1 ? "ACTIVE" : "INACTIVE"}
                   </span>
