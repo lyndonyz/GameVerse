@@ -169,7 +169,6 @@ app.get("/api/searchByCategory", async (req, res) => {
   }
 });
 
-// --- ADVANCED SEARCH (FR1 + FR3) ---
 app.get("/api/advancedSearch", async (req, res) => {
   const apiKey = process.env.EXTERNAL_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "Missing EXTERNAL_API_KEY" });
@@ -189,7 +188,6 @@ app.get("/api/advancedSearch", async (req, res) => {
   const requestedPageSize = Number(page_size);
   const requestedPage = Number(page);
 
-  // Build base URL with all API-supported filters
   let baseUrl = `https://api.rawg.io/api/games?key=${apiKey}`;
   if (q) baseUrl += `&search=${encodeURIComponent(q)}`;
   if (genre) baseUrl += `&genres=${genre}`;
@@ -205,17 +203,13 @@ app.get("/api/advancedSearch", async (req, res) => {
     let filteredResults = [];
     let apiPage = 1;
     let hasMorePages = true;
-    const maxApiPages = 10; // Safety limit to prevent infinite loops
-
-    // Calculate starting API page based on requested page
-    // We need to track how many filtered results we've seen to know where to start
+    const maxApiPages = 10;
     const targetSkip = (requestedPage - 1) * requestedPageSize;
     let totalFiltered = 0;
     let skippedCount = 0;
 
-    // Keep fetching until we have enough filtered results for the requested page
     while (filteredResults.length < requestedPageSize && hasMorePages && apiPage <= maxApiPages) {
-      const url = `${baseUrl}&page=${apiPage}&page_size=40`; // Fetch more per request
+      const url = `${baseUrl}&page=${apiPage}&page_size=40`;
       const json = await retryFetch(url);
 
       if (!json.results || json.results.length === 0) {
@@ -223,7 +217,6 @@ app.get("/api/advancedSearch", async (req, res) => {
         break;
       }
 
-      // Map results
       let pageResults = json.results.map((g) => ({
         id: g.id,
         name: g.name,
@@ -233,7 +226,6 @@ app.get("/api/advancedSearch", async (req, res) => {
         raw: g,
       }));
 
-      // Apply client-side filters
       if (hasClientSideFilters) {
         const checkVRSupport = (gameData) => {
           const name = gameData.name?.toLowerCase() || "";
@@ -243,7 +235,6 @@ app.get("/api/advancedSearch", async (req, res) => {
           const platformSlugs = gameData.platforms?.map((p) => p.platform?.slug?.toLowerCase() || "") || [];
           const stores = gameData.stores?.map((s) => s.store?.name?.toLowerCase() || "") || [];
           
-          // Enhanced VR keywords for name/text checking
           const vrKeywords = [
             "vr", 
             "virtual reality", 
@@ -261,7 +252,6 @@ app.get("/api/advancedSearch", async (req, res) => {
             "steamvr"
           ];
           
-          // VR-specific tag slugs that indicate VR support
           const vrTagSlugs = [
             "vr",
             "virtual-reality",
@@ -273,7 +263,6 @@ app.get("/api/advancedSearch", async (req, res) => {
             "oculus-quest"
           ];
           
-          // VR platform slugs
           const vrPlatformSlugs = [
             "oculus-quest",
             "oculus-quest-2", 
@@ -287,17 +276,14 @@ app.get("/api/advancedSearch", async (req, res) => {
             "oculus-rift"
           ];
           
-          // Check name (most reliable)
           if (vrKeywords.some(k => name.includes(k))) {
             return true;
           }
           
-          // Check tag slugs (very reliable)
           if (tagSlugs.some(slug => vrTagSlugs.includes(slug))) {
             return true;
           }
           
-          // Check tags by name
           if (tags.some(t => 
             vrKeywords.some(k => t.includes(k)) || 
             t === "vr" || 
@@ -309,12 +295,10 @@ app.get("/api/advancedSearch", async (req, res) => {
             return true;
           }
           
-          // Check platform slugs
           if (platformSlugs.some(slug => vrPlatformSlugs.includes(slug))) {
             return true;
           }
-          
-          // Check platforms by name
+
           if (platforms.some(p => 
             vrKeywords.some(k => p.includes(k)) ||
             p.includes("quest") ||
@@ -325,7 +309,6 @@ app.get("/api/advancedSearch", async (req, res) => {
             return true;
           }
           
-          // Check stores for VR-specific stores
           if (stores.some(s => 
             s.includes("oculus") ||
             s.includes("vive") ||
@@ -344,7 +327,6 @@ app.get("/api/advancedSearch", async (req, res) => {
         }
       }
 
-      // Skip results until we reach the target page
       for (const result of pageResults) {
         if (skippedCount < targetSkip) {
           skippedCount++;
@@ -367,11 +349,7 @@ app.get("/api/advancedSearch", async (req, res) => {
       }
     }
 
-    // Clean up results (remove raw data)
     const finalResults = filteredResults.map(({ raw, ...rest }) => rest);
-
-    // Determine if there are more results
-    // We have next if: we hit the page limit with full results, or we stopped early because we got enough
     const hasNext = filteredResults.length === requestedPageSize && hasMorePages;
     const hasPrev = requestedPage > 1;
 
@@ -388,7 +366,6 @@ app.get("/api/advancedSearch", async (req, res) => {
   }
 });
 
-// --- Game details & VR detection ---
 app.get("/api/game/:id", async (req, res) => {
   const gameId = req.params.id;
   const apiKey = process.env.EXTERNAL_API_KEY;
@@ -412,7 +389,6 @@ app.get("/api/game/:id", async (req, res) => {
       publishers: g.publishers?.map((p) => p.name) || [],
     };
 
-    // Enhanced VR detection matching the filter logic
     const vrKeywords = [
       "vr", 
       "virtual reality", 
@@ -464,11 +440,8 @@ app.get("/api/game/:id", async (req, res) => {
     const stores = g.stores?.map((s) => s.store?.name?.toLowerCase() || "") || [];
     
     const vr_supported =
-      // Check name
       vrKeywords.some((k) => name.includes(k)) ||
-      // Check tag slugs
       tagSlugs.some(slug => vrTagSlugs.includes(slug)) ||
-      // Check tags by name
       tags.some((t) => 
         vrKeywords.some((k) => t.includes(k)) || 
         t === "vr" || 
@@ -477,9 +450,7 @@ app.get("/api/game/:id", async (req, res) => {
         t.endsWith(" vr") ||
         t.endsWith("-vr")
       ) ||
-      // Check platform slugs
       platformSlugs.some(slug => vrPlatformSlugs.includes(slug)) ||
-      // Check platforms by name
       platforms.some((p) => 
         vrKeywords.some((k) => p.includes(k)) ||
         p.includes("quest") ||
@@ -487,13 +458,11 @@ app.get("/api/game/:id", async (req, res) => {
         p.includes("vive") ||
         p.includes("psvr")
       ) ||
-      // Check stores
       stores.some(s => 
         s.includes("oculus") ||
         s.includes("vive") ||
         s.includes("playstation vr")
       ) ||
-      // Check description
       vrKeywords.some((k) => desc.includes(k));
 
     details.vr_supported = vr_supported ? "Yes" : "No";
@@ -508,7 +477,7 @@ app.get("/api/game/:id", async (req, res) => {
 // --- Comments Updated ---
 app.get("/api/game/:id/comments", async (req, res) => {
   const { id } = req.params;
-    const commentIds = await getCommentsByGameID(id); // gets list of comment IDs
+    const commentIds = await getCommentsByGameID(id);
     // get the comments
     const comments = await Promise.all(commentIds.map(getCommentById));
     
@@ -529,7 +498,6 @@ app.post("/api/game/:id/comments", async (req, res) => {
   const { id } = req.params;
   const text = (req.body?.text || "").trim();
   const rating = req.body.rating;
-  // TODO: replace "Temp" with actual logged-in username from auth
   const username = req.body.user; 
 
   if (!text || !username) {
@@ -543,8 +511,6 @@ app.post("/api/game/:id/comments", async (req, res) => {
     const newCommentDoc = await addComment(id, username, text, rating);
 
     if (!newCommentDoc) throw new Error("Failed to add comment");
-
-    // Map fields for frontend
     const comment = {
       id: newCommentDoc._id,
       text: newCommentDoc.comment,
@@ -560,7 +526,6 @@ app.post("/api/game/:id/comments", async (req, res) => {
   }
 });
 
-// --- Service Registry Endpoints (Admin Only) ---
 const { getStatus, updateServiceStatus } = require("./db/serviceRegistryDB");
 
 app.get("/api/admin/services", async (req, res) => {
@@ -587,7 +552,6 @@ app.post("/api/admin/services/:serviceName/toggle", async (req, res) => {
   }
 
   try {
-    // Find the service in MICROSERVICES
     const serviceExists = Object.values(registry.MICROSERVICES).includes(serviceName);
     if (!serviceExists) {
       return res.status(404).json({ error: "Service not found" });
