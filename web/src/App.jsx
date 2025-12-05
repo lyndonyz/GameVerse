@@ -16,27 +16,18 @@ function App() {
   const [err, setErr] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, setLoggedIn, user, logout } = useAuth();
-
   const [categories, setCategories] = useState([]);
   const [cat, setCat] = useState("");
-
   const [sortOrder, setSortOrder] = useState("");
-
-  // comment
   const [commentRating, setCommentRating] = useState("");
-
-  // moved filters into panel
   const [platform, setPlatform] = useState("");
   const [vr, setVr] = useState("");
   const [minRating, setMinRating] = useState("");
   const [releasedFrom, setReleasedFrom] = useState("");
   const [releasedTo, setReleasedTo] = useState("");
-
-  // filter panel new state
   const [showFilters, setShowFilters] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
   const dropdownRef = useRef(null);
-
   const [selected, setSelected] = useState(null);
   const [details, setDetails] = useState(null);
   const [comments, setComments] = useState([]);
@@ -44,11 +35,7 @@ function App() {
   const [saving, setSaving] = useState(false);
   const modalRef = useRef(null);
   const [tab, setTab] = useState("overview");
-
-  // NEW: store user's games in memory as a map { [gameName]: status }
   const [userGames, setUserGames] = useState({});
-  
-  // normalize names for consistent string-to-string comparisons (trim + lowercase)
   const normalizeName = (n) => (n || "").toString().trim().toLowerCase();
 
   const displayedResults = useMemo(() => {
@@ -68,19 +55,48 @@ function App() {
       .slice(0, 5);
   }, [displayedResults]);
 
-  // API
+  const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+  const latestDiscoverRef = useRef(0);
+  const latestSearchRef = useRef(0);
+
+  const readCache = (key) => {
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || Date.now() - (parsed.t || 0) > CACHE_TTL) {
+        sessionStorage.removeItem(key);
+        return null;
+      }
+      return parsed.v;
+    } catch {
+      return null;
+    }
+  };
+
+  const writeCache = (key, value) => {
+    try {
+      sessionStorage.setItem(key, JSON.stringify({ v: value, t: Date.now() }));
+    } catch {}
+  };
+
   const loadDiscover = async (opts = {}) => {
     const targetPage = opts.page ?? 1;
     setLoading(true);
     setErr("");
+    const requestId = ++latestDiscoverRef.current;
     try {
       const r = await fetch(`/api/discover?page=${targetPage}&page_size=24`);
       const data = await r.json();
       if (data.error) throw new Error(data.error);
+      // ignore if a newer discover request has started
+      if (requestId !== latestDiscoverRef.current) return;
       setResults(data.results || []);
       setHasNext(data.hasNext);
       setHasPrev(data.hasPrev);
       setPage(data.page || targetPage);
+      // cache the successful page 1 discover (keep small)
+      if (targetPage === 1) writeCache("discover_page_1", data);
     } catch {
       setErr("Failed to load games");
     } finally {
@@ -94,6 +110,7 @@ function App() {
     if (!query) return;
     setLoading(true);
     setErr("");
+    const requestId = ++latestSearchRef.current;
     try {
       const r = await fetch(
         `/api/search?q=${encodeURIComponent(
@@ -102,6 +119,8 @@ function App() {
       );
       const data = await r.json();
       if (data.error) throw new Error(data.error);
+      // ignore stale search responses
+      if (requestId !== latestSearchRef.current) return;
       setResults(data.results || []);
       setHasNext(data.hasNext);
       setHasPrev(data.hasPrev);
@@ -171,17 +190,35 @@ function App() {
 
   // initial load
   useEffect(() => {
+    const cached = readCache("discover_page_1");
+    if (cached?.results) {
+      setResults(cached.results || []);
+      setHasNext(cached.hasNext);
+      setHasPrev(cached.hasPrev);
+      setPage(cached.page || 1);
+    } else {
+      setLoading(true);
+    }
+    // always refresh in background
     loadDiscover({ page: 1 });
+
     (async () => {
+      const catCached = readCache("categories");
+      if (catCached) {
+        setCategories(catCached);
+        return;
+      }
       try {
         const r = await fetch("/api/categories");
         const data = await r.json();
-        if (data?.categories) setCategories(data.categories);
+        if (data?.categories) {
+          setCategories(data.categories);
+          writeCache("categories", data.categories);
+        }
       } catch {}
     })();
   }, []);
 
-  // NEW: load user's saved games into memory whenever user logs in / changes
   useEffect(() => {
     if (!loggedIn || !user?.username) {
       setUserGames({});
@@ -189,7 +226,6 @@ function App() {
     }
     (async () => {
       try {
-        // Use same endpoint/shape as YourList.jsx to fetch the saved games list
         const url = `${API_BASE_URL}/auth/getAllGames`;
         const r = await fetch(url, {
           method: "POST",
@@ -197,8 +233,6 @@ function App() {
           body: JSON.stringify({ username: user.username }),
         });
         const data = await r.json();
-
-        // data.list is the shape returned in YourList.jsx
         const items = Array.isArray(data.list) ? data.list : data.games || data.items || [];
 
         const map = {};
@@ -355,7 +389,6 @@ function App() {
 
       setCommentInput("");
       setCommentRating("");
-      // SET COMMENTS
       setComments((prev) => [...prev, newComment]);
       setTab("comments");
     } catch {
@@ -431,7 +464,6 @@ function App() {
 
   const handleStatusChange = async (gameOrName, newStatus) => {
     try {
-      // Normalize input: allow passing either the game object or the name/slug string
       const gameObj =
         typeof gameOrName === "object" && gameOrName !== null
           ? gameOrName
@@ -704,7 +736,7 @@ function App() {
                       role="button"
                       tabIndex={0}
                     >
-                      {g.image ? <img src={g.image} alt={name} /> : <div className="placeholder">No Image</div>}
+                      {g.image ? <img loading="lazy" src={g.image} alt={name} /> : <div className="placeholder">No Image</div>}
                     </div>
 
                     <div className="meta">
@@ -741,7 +773,7 @@ function App() {
                 <div className="topItem">
                   <div className="thumb">
                     {g.image ? (
-                      <img src={g.image} alt={g.name} />
+                      <img loading="lazy" src={g.image} alt={g.name} />
                     ) : (
                       <div className="miniPh" />
                     )}
