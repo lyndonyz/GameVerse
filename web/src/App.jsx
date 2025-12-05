@@ -976,9 +976,9 @@ function App() {
                       <li>
                         <strong>VR Compatible:</strong>{" "}
                         {details?.vr_supported === "Yes" ? (
-                          <>Yes ✨ ✔️</>
+                          <>Yes</>
                         ) : (
-                          <>No ✖️</>
+                          <>No</>
                         )}
                       </li>
                       <li>

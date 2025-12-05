@@ -10,11 +10,7 @@ function YourList() {
   const { loggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
   const { isServiceActive, isServiceActiveAndLoaded, isServiceActiveOrLoading, loading: servicesLoading } = useServiceStatus();
-  
-  // For redirects, use isServiceActiveOrLoading to prevent premature redirects
   const userLibraryActiveOrLoading = isServiceActiveOrLoading("User Library");
-  
-  // For navigation, use isServiceActiveAndLoaded to hide while loading
   const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
   const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
   
@@ -52,7 +48,6 @@ function YourList() {
     if (!ok) return;
 
     const prev = games;
-    // optimistically remove from UI
     setGames((g) =>
       g.filter((item) => (item.gameName || item.name || item.slug) !== name)
     );
@@ -310,7 +305,7 @@ function YourList() {
           borderBottom: "2px solid #ff6961",
           boxShadow: "0 4px 12px rgba(255, 59, 48, 0.3)"
         }}>
-          ⚠️ WARNING: User Library service is currently DOWN
+          WARNING: User Library service is currently DOWN
         </div>
       )}
 
