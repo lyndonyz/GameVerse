@@ -89,7 +89,7 @@ function YourList() {
           return { ...item, image: item.image || "", id: item.id || null };
         try {
           const r = await fetch(
-            `/api/search?q=${encodeURIComponent(query)}&page=1&page_size=3`
+            `${API_BASE_URL}/api/search?q=${encodeURIComponent(query)}&page=1&page_size=3`
           );
           const data = await r.json();
           const siteResults = Array.isArray(data.results) ? data.results : [];

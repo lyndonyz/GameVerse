@@ -95,7 +95,7 @@ function App() {
     setErr("");
     const requestId = ++latestDiscoverRef.current;
     try {
-      const r = await fetch(`/api/discover?page=${targetPage}&page_size=10`);
+      const r = await fetch(`${API_BASE_URL}/api/discover?page=${targetPage}&page_size=10`);
       const data = await r.json();
       if (data.error) throw new Error(data.error);
       // ignore if a newer discover request has started
@@ -122,7 +122,7 @@ function App() {
     const requestId = ++latestSearchRef.current;
     try {
       const r = await fetch(
-        `/api/search?q=${encodeURIComponent(
+        `${API_BASE_URL}/api/search?q=${encodeURIComponent(
           query
         )}&page=${targetPage}&page_size=10`
       );
@@ -149,7 +149,7 @@ function App() {
     setErr("");
     try {
       const r = await fetch(
-        `/api/searchByCategory?genre=${encodeURIComponent(
+        `${API_BASE_URL}/api/searchByCategory?genre=${encodeURIComponent(
           genre
         )}&page=${targetPage}&page_size=10`
       );
@@ -183,7 +183,7 @@ function App() {
       page_size: 10,
     });
     try {
-      const r = await fetch(`/api/advancedSearch?${params.toString()}`);
+      const r = await fetch(`${API_BASE_URL}/api/advancedSearch?${params.toString()}`);
       const data = await r.json();
       if (data.error) throw new Error(data.error);
       setResults(data.results || []);
@@ -317,8 +317,8 @@ function App() {
     setTab("overview");
     try {
       const [dRes, cRes] = await Promise.all([
-        fetch(`/api/game/${g.id}`),
-        fetch(`/api/game/${g.id}/comments`),
+        fetch(`${API_BASE_URL}/api/game/${g.id}`),
+        fetch(`${API_BASE_URL}/api/game/${g.id}/comments`),
       ]);
       setDetails(await dRes.json());
       const c = await cRes.json();
@@ -342,7 +342,7 @@ function App() {
     if (!text || !selected) return;
     setSaving(true);
     try {
-      const r = await fetch(`/api/game/${selected.id}/comments`, {
+      const r = await fetch(`${API_BASE_URL}/api/game/${selected.id}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

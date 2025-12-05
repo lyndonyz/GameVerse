@@ -253,7 +253,7 @@ function Dashboard() {
           pagesToTry.map(async (pg) => {
             const pageSize = 100;
             const ordering = randChoice(orderings);
-            const url = `/api/discover?page=${pg}&page_size=${pageSize}${
+            const url = `${API_BASE_URL}/api/discover?page=${pg}&page_size=${pageSize}${
               ordering ? `&ordering=${ordering}` : ""
             }`;
             try {
@@ -283,7 +283,7 @@ function Dashboard() {
           const page = randInt(1, 6);
           const pageSize = 40;
           const year = randInt(1990, new Date().getFullYear());
-          const url = `/api/search?q=${encodeURIComponent(
+          const url = `${API_BASE_URL}/api/search?q=${encodeURIComponent(
             t
           )}&page=${page}&page_size=${pageSize}&releasedFrom=${year}-01-01&releasedTo=${year}-12-31`;
           return fetch(url)
