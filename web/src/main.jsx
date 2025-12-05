@@ -5,6 +5,7 @@ import Login from "./Login.jsx";
 import AccountCreate from "./AccountCreate.jsx";  
 import YourList from './YourList.jsx';
 import Settings from './Settings.jsx';
+import ServiceRegistry from './ServiceRegistry.jsx';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -22,6 +23,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/register" element={<AccountCreate />} /> 
           <Route path="/yourlist" element={<YourList />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/admin/services" element={<ServiceRegistry />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

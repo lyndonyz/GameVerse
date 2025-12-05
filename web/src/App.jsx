@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
+import { useServiceStatus } from "./useServiceStatus.js";
 import "./App.css";
 
 function App() {
   //const API_BASE_URL = "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
   const API_BASE_URL = "http://localhost:8000";
+  const { isServiceActive, isServiceActiveAndLoaded, isServiceActiveOrLoading, loading: servicesLoading } = useServiceStatus();
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [results, setResults] = useState([]);
@@ -16,6 +18,16 @@ function App() {
   const [err, setErr] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, setLoggedIn, user, logout } = useAuth();
+  
+  // For navigation, use isServiceActiveAndLoaded to hide while loading
+  const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
+  const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
+  
+  // For UI elements, use isServiceActive for immediate response
+  const analyticsActive = isServiceActive("Analytics & Visualization");
+  const userLibraryActive = isServiceActive("User Library");
+  
+  const isAdmin = user?.username?.toLowerCase() === "admin";
   const [categories, setCategories] = useState([]);
   const [cat, setCat] = useState("");
   const [sortOrder, setSortOrder] = useState("");
@@ -701,31 +713,33 @@ function App() {
                   <li key={g.id} className="row">
                     <div className="rank">{rank}</div>
 
-                    <div className="addBtnWrapper">
-                      {inList ? (
-                        <select
-                          value={userGames[key]}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) =>
-                            handleStatusChange(g, e.target.value)
-                          }
-                          title="Change status"
-                        >
-                          <option value="0">Plan to Play</option>
-                          <option value="1">Playing</option>
-                          <option value="2">Completed</option>
-                          <option value="3">Dropped</option>
-                        </select>
-                      ) : (
-                        <button
-                          className="addBtn"
-                          onClick={() => handleAddToList(g)}
-                          title="Add to your list"
-                        >
-                          +
-                        </button>
-                      )}
-                    </div>
+                    {(userLibraryActive || isAdmin) && (
+                      <div className="addBtnWrapper">
+                        {inList ? (
+                          <select
+                            value={userGames[key]}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleStatusChange(g, e.target.value)
+                            }
+                            title="Change status"
+                          >
+                            <option value="0">Plan to Play</option>
+                            <option value="1">Playing</option>
+                            <option value="2">Completed</option>
+                            <option value="3">Dropped</option>
+                          </select>
+                        ) : (
+                          <button
+                            className="addBtn"
+                            onClick={() => handleAddToList(g)}
+                            title="Add to your list"
+                          >
+                            +
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                     <div
                       className="cover"
@@ -794,20 +808,35 @@ function App() {
         <button className="drawerClose" onClick={() => setMenuOpen(false)}>
           ✕
         </button>
-        <nav className="drawerMenu">
-          <Link to="/" onClick={() => setMenuOpen(false)}>
-            Home
-          </Link>
-          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
-            Dashboard
-          </Link>
-          <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
-            Your List
-          </Link>
-          <Link to="/settings" onClick={() => setMenuOpen(false)}>
-            Settings
-          </Link>
-        </nav>
+        {servicesLoading ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+            Loading menu...
+          </div>
+        ) : (
+          <nav className="drawerMenu">
+            <Link to="/" onClick={() => setMenuOpen(false)}>
+              Home
+            </Link>
+            {(analyticsActive || isAdmin) && (
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
+                Dashboard
+              </Link>
+            )}
+            {(userLibraryActive || isAdmin) && (
+              <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
+                Your List
+              </Link>
+            )}
+            <Link to="/settings" onClick={() => setMenuOpen(false)}>
+              Settings
+            </Link>
+            {loggedIn && user?.username?.toLowerCase() === "admin" && (
+              <Link to="/admin/services" onClick={() => setMenuOpen(false)}>
+                Service Registry
+              </Link>
+            )}
+          </nav>
+        )}
         <div className="drawerAuthFooter">
           {!loggedIn ? (
             <Link
@@ -853,7 +882,7 @@ function App() {
               ✕
             </button>
 
-            {loggedIn && userGames[normalizeName(selected.name)] != null ? (
+            {(userLibraryActive || isAdmin) && loggedIn && userGames[normalizeName(selected.name)] != null ? (
               <div className="addBtnWrapper2">
                 <div className="modalStatus">
                   <select
@@ -869,7 +898,7 @@ function App() {
                   </select>
                 </div>
               </div>
-            ) : (
+            ) : (userLibraryActive || isAdmin) ? (
               <button
                 className="addDetailBtn"
                 onClick={handleAddFromModal}
@@ -877,7 +906,7 @@ function App() {
               >
                 +
               </button>
-            )}
+            ) : null}
             <div className="modalHeader">
               {details?.image && (
                 <img

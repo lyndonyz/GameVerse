@@ -1,12 +1,36 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
+import { useServiceStatus } from "./useServiceStatus.js";
 import "./App.css";
 import "./dashboard.css";
 
 function YourList() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, user, logout } = useAuth();
+  const navigate = useNavigate();
+  const { isServiceActive, isServiceActiveAndLoaded, isServiceActiveOrLoading, loading: servicesLoading } = useServiceStatus();
+  
+  // For redirects, use isServiceActiveOrLoading to prevent premature redirects
+  const userLibraryActiveOrLoading = isServiceActiveOrLoading("User Library");
+  
+  // For navigation, use isServiceActiveAndLoaded to hide while loading
+  const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
+  const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
+  
+  // For UI elements, use isServiceActive for immediate response
+  const analyticsActive = isServiceActive("Analytics & Visualization");
+  const userLibraryActive = isServiceActive("User Library");
+  
+  const isAdmin = user?.username?.toLowerCase() === "admin";
+
+  // Redirect non-admin users if User Library service is down
+  useEffect(() => {
+    if (loggedIn && !userLibraryActiveOrLoading && !isAdmin) {
+      navigate("/");
+    }
+  }, [loggedIn, userLibraryActiveOrLoading, isAdmin, navigate]);
+
   const API_BASE_URL = "http://localhost:8000";
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -275,7 +299,22 @@ function YourList() {
         <div className="brand">GAMEVERSE</div>
       </header>
 
-      <main className="main yourListMain">
+      {loggedIn && isAdmin && !userLibraryActive && (
+        <div style={{
+          background: "linear-gradient(135deg, #ff3b30, #ff453a)",
+          color: "#fff",
+          padding: "12px 16px",
+          textAlign: "center",
+          fontWeight: "700",
+          fontSize: "14px",
+          borderBottom: "2px solid #ff6961",
+          boxShadow: "0 4px 12px rgba(255, 59, 48, 0.3)"
+        }}>
+          ⚠️ WARNING: User Library service is currently DOWN
+        </div>
+      )}
+
+      <main className="main yourListMain" style={{ minHeight: "calc(100vh - 120px)" }}>
         {!loggedIn ? (
           <div className="loginPromptContainer">
             <h1>Please log in to view your games list.</h1>
@@ -406,20 +445,35 @@ function YourList() {
         <button className="drawerClose" onClick={() => setMenuOpen(false)}>
           ✕
         </button>
-        <nav className="drawerMenu">
-          <Link to="/" onClick={() => setMenuOpen(false)}>
-            Home
-          </Link>
-          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
-            Dashboard
-          </Link>
-          <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
-            Your List
-          </Link>
-          <Link to="/settings" onClick={() => setMenuOpen(false)}>
-            Settings
-          </Link>
-        </nav>
+        {servicesLoading ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+            Loading menu...
+          </div>
+        ) : (
+          <nav className="drawerMenu">
+            <Link to="/" onClick={() => setMenuOpen(false)}>
+              Home
+            </Link>
+            {(analyticsActive || isAdmin) && (
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
+                Dashboard
+              </Link>
+            )}
+            {(userLibraryActive || isAdmin) && (
+              <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
+                Your List
+              </Link>
+            )}
+            <Link to="/settings" onClick={() => setMenuOpen(false)}>
+              Settings
+            </Link>
+            {loggedIn && user?.username?.toLowerCase() === "admin" && (
+              <Link to="/admin/services" onClick={() => setMenuOpen(false)}>
+                Service Registry
+              </Link>
+            )}
+          </nav>
+        )}
         <div className="drawerAuthFooter">
           {loggedIn ? (
             <div className="drawerUserBlock">

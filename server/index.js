@@ -334,6 +334,51 @@ app.post("/api/game/:id/comments", async (req, res) => {
   }
 });
 
+// --- Service Registry Endpoints (Admin Only) ---
+const { getStatus, updateServiceStatus } = require("./db/serviceRegistryDB");
+
+app.get("/api/admin/services", async (req, res) => {
+  try {
+    const services = {};
+    for (const key in registry.MICROSERVICES) {
+      const serviceName = registry.MICROSERVICES[key];
+      const status = await getStatus(serviceName);
+      services[serviceName] = Number(status);
+    }
+    res.json({ services });
+  } catch (err) {
+    console.error("Failed to fetch services:", err);
+    res.status(500).json({ error: "Failed to fetch services" });
+  }
+});
+
+app.post("/api/admin/services/:serviceName/toggle", async (req, res) => {
+  const { serviceName } = req.params;
+  const { status } = req.body;
+
+  if (status !== 0 && status !== 1) {
+    return res.status(400).json({ error: "Status must be 0 or 1" });
+  }
+
+  try {
+    // Find the service in MICROSERVICES
+    const serviceExists = Object.values(registry.MICROSERVICES).includes(serviceName);
+    if (!serviceExists) {
+      return res.status(404).json({ error: "Service not found" });
+    }
+
+    const result = await updateServiceStatus(serviceName, status);
+    if (!result) {
+      return res.status(500).json({ error: "Failed to update service" });
+    }
+
+    res.json({ ok: true, serviceName, status });
+  } catch (err) {
+    console.error("Failed to toggle service:", err);
+    res.status(500).json({ error: "Failed to toggle service" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
+import { useServiceStatus } from "./useServiceStatus.js";
 import "./App.css";
 import "./dashboard.css";
 import Calendar from "react-calendar";
@@ -13,7 +14,8 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 function Dashboard() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, user, logout } = useAuth();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { isServiceActive, isServiceActiveAndLoaded, isServiceActiveOrLoading, loading: servicesLoading } = useServiceStatus();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [calendarValue, setCalendarValue] = useState(new Date());
   const API_BASE_URL = "http://localhost:8000";
@@ -33,6 +35,26 @@ function Dashboard() {
   const [userGames, setUserGames] = useState({});
 
   const normalizeName = (n) => (n || "").toString().trim().toLowerCase();
+
+  // For redirects, use isServiceActiveOrLoading to prevent premature redirects
+  const analyticsActiveOrLoading = isServiceActiveOrLoading("Analytics & Visualization");
+  
+  // For navigation, use isServiceActiveAndLoaded to hide while loading
+  const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
+  const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
+  
+  // For UI elements, use isServiceActive for immediate response
+  const analyticsActive = isServiceActive("Analytics & Visualization");
+  const userLibraryActive = isServiceActive("User Library");
+  
+  const isAdmin = user?.username?.toLowerCase() === "admin";
+
+  // Redirect non-admin users if service is down
+  useEffect(() => {
+    if (loggedIn && !analyticsActiveOrLoading && !isAdmin) {
+      navigate("/");
+    }
+  }, [loggedIn, analyticsActiveOrLoading, isAdmin, navigate]);
 
   useEffect(() => {
     const timerId = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -612,8 +634,23 @@ function Dashboard() {
         </div>
       </header>
 
+      {loggedIn && isAdmin && !analyticsActive && (
+        <div style={{
+          background: "linear-gradient(135deg, #ff3b30, #ff453a)",
+          color: "#fff",
+          padding: "12px 16px",
+          textAlign: "center",
+          fontWeight: "700",
+          fontSize: "14px",
+          borderBottom: "2px solid #ff6961",
+          boxShadow: "0 4px 12px rgba(255, 59, 48, 0.3)"
+        }}>
+          WARNING: Analytics & Visualization service is currently DOWN
+        </div>
+      )}
+
       <main className="main">
-        <section className="results">
+        <section className="results" style={{ minHeight: "calc(100vh - 120px)" }}>
           {!loggedIn ? (
             <div className="loginPromptContainer">
               <h1>Please log in to view your dashboard.</h1>
@@ -726,9 +763,11 @@ function Dashboard() {
                 </div>
 
                 {loadingPicks ? (
-                  <div className="random-picks-loading">Loading picks…</div>
+                  <div className="random-picks-loading" style={{ minHeight: "200px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    Loading picks…
+                  </div>
                 ) : randomPicks.length === 0 ? (
-                  <div className="no-random-picks">
+                  <div className="no-random-picks" style={{ minHeight: "200px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     No game picks available.
                   </div>
                 ) : (
@@ -751,31 +790,33 @@ function Dashboard() {
                         <li key={key} className="row">
                           <div className="rank">{idx + 1}</div>
 
-                          <div className="addBtnWrapper">
-                            {inList ? (
-                              <select
-                                value={String(userGames[normalizeName(name)])}
-                                onClick={(e) => e.stopPropagation()}
-                                onChange={(e) =>
-                                  handleStatusChangeFromPick(g, e.target.value)
-                                }
-                                title="Change status"
-                              >
-                                <option value="0">Plan to Play</option>
-                                <option value="1">Playing</option>
-                                <option value="2">Completed</option>
-                                <option value="3">Dropped</option>
-                              </select>
-                            ) : (
-                              <button
-                                className="addBtn"
-                                onClick={() => handleAddToList(g)}
-                                title="Add to your list"
-                              >
-                                +
-                              </button>
-                            )}
-                          </div>
+                          {(userLibraryActive || isAdmin) && (
+                            <div className="addBtnWrapper">
+                              {inList ? (
+                                <select
+                                  value={String(userGames[normalizeName(name)])}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) =>
+                                    handleStatusChangeFromPick(g, e.target.value)
+                                  }
+                                  title="Change status"
+                                >
+                                  <option value="0">Plan to Play</option>
+                                  <option value="1">Playing</option>
+                                  <option value="2">Completed</option>
+                                  <option value="3">Dropped</option>
+                                </select>
+                              ) : (
+                                <button
+                                  className="addBtn"
+                                  onClick={() => handleAddToList(g)}
+                                  title="Add to your list"
+                                >
+                                  +
+                                </button>
+                              )}
+                            </div>
+                          )}
 
                           <div
                             className="cover"
@@ -840,20 +881,35 @@ function Dashboard() {
         <button className="drawerClose" onClick={() => setMenuOpen(false)}>
           ✕
         </button>
-        <nav className="drawerMenu">
-          <Link to="/" onClick={() => setMenuOpen(false)}>
-            Home
-          </Link>
-          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
-            Dashboard
-          </Link>
-          <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
-            Your List
-          </Link>
-          <Link to="/settings" onClick={() => setMenuOpen(false)}>
-            Settings
-          </Link>
-        </nav>
+        {servicesLoading ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+            Loading menu...
+          </div>
+        ) : (
+          <nav className="drawerMenu">
+            <Link to="/" onClick={() => setMenuOpen(false)}>
+              Home
+            </Link>
+            {(analyticsActive || isAdmin) && (
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
+                Dashboard
+              </Link>
+            )}
+            {(userLibraryActive || isAdmin) && (
+              <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
+                Your List
+              </Link>
+            )}
+            <Link to="/settings" onClick={() => setMenuOpen(false)}>
+              Settings
+            </Link>
+            {loggedIn && user?.username?.toLowerCase() === "admin" && (
+              <Link to="/admin/services" onClick={() => setMenuOpen(false)}>
+                Service Registry
+              </Link>
+            )}
+          </nav>
+        )}
         <div className="drawerAuthFooter">
           {!loggedIn ? (
             <Link

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
+import { useServiceStatus } from "./useServiceStatus.js";
 import "./App.css";
 import "./Settings.css";
 
@@ -18,6 +19,17 @@ function Settings() {
     "https://my-backend-api.23gzti4bhp77.ca-tor.codeengine.appdomain.cloud";
   const [menuOpen, setMenuOpen] = useState(false);
   const { loggedIn, user, setUser, logout } = useAuth();
+  const { isServiceActive, isServiceActiveAndLoaded, loading: servicesLoading } = useServiceStatus();
+  
+  // For navigation, use isServiceActiveAndLoaded to hide while loading
+  const analyticsActiveAndLoaded = isServiceActiveAndLoaded("Analytics & Visualization");
+  const userLibraryActiveAndLoaded = isServiceActiveAndLoaded("User Library");
+  
+  // For UI elements (if any in future), use isServiceActive for immediate response
+  const analyticsActive = isServiceActive("Analytics & Visualization");
+  const userLibraryActive = isServiceActive("User Library");
+  
+  const isAdmin = user?.username?.toLowerCase() === "admin";
   const [statusMessage, setStatusMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [newUsername, setNewUsername] = useState(user?.username || "");
@@ -333,20 +345,35 @@ function Settings() {
         <button className="drawerClose" onClick={() => setMenuOpen(false)}>
           ✕
         </button>
-        <nav className="drawerMenu">
-          <Link to="/" onClick={() => setMenuOpen(false)}>
-            Home
-          </Link>
-          <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
-            Dashboard
-          </Link>
-          <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
-            Your List
-          </Link>
-          <Link to="/settings" onClick={() => setMenuOpen(false)}>
-            Settings
-          </Link>
-        </nav>
+        {servicesLoading ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+            Loading menu...
+          </div>
+        ) : (
+          <nav className="drawerMenu">
+            <Link to="/" onClick={() => setMenuOpen(false)}>
+              Home
+            </Link>
+            {(analyticsActive || isAdmin) && (
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)}>
+                Dashboard
+              </Link>
+            )}
+            {(userLibraryActive || isAdmin) && (
+              <Link to="/yourlist" onClick={() => setMenuOpen(false)}>
+                Your List
+              </Link>
+            )}
+            <Link to="/settings" onClick={() => setMenuOpen(false)}>
+              Settings
+            </Link>
+            {loggedIn && user?.username?.toLowerCase() === "admin" && (
+              <Link to="/admin/services" onClick={() => setMenuOpen(false)}>
+                Service Registry
+              </Link>
+            )}
+          </nav>
+        )}
         <div className="drawerAuthFooter">
           {!loggedIn ? (
             <Link
