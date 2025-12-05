@@ -298,7 +298,7 @@ function Dashboard() {
 
       if (pool.length < 40) {
         try {
-          const RAWG_KEY = process.env.REACT_APP_RAWG_API_KEY || "";
+          const RAWG_KEY = import.meta.env.VITE_RAWG_API_KEY || "";
           if (RAWG_KEY) {
             const metaRes = await fetch(
               `https://api.rawg.io/api/games?key=${encodeURIComponent(
