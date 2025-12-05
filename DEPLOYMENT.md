@@ -8,47 +8,28 @@ Make sure you have **Docker Desktop** installed and an **IBM Cloud account** set
 ### For MacOS:
 You'll need Docker Desktop and IBM Cloud CLI.
 
-1. **Install Docker Desktop**
-   <br>Download from: https://www.docker.com/products/docker-desktop
-   <br>Just install it like any other Mac app.
+**Install Docker Desktop**
+<br>Download the Docker [Desktop Application](https://www.docker.com/products/docker-desktop)
+<br>Just install it like any other Mac application and follow the steps it tells you. You could also download it threw brew, which is what I did and probably was less efficient then downloading through The official website.
 
-2. **Install IBM Cloud CLI**
-   ```bash
-   curl -fsSL https://clis.cloud.ibm.com/install/osx | sh
-   ```
+**Install IBM Cloud CLI**
+```bash
+curl -fsSL https://clis.cloud.ibm.com/install/osx | sh
+```
 
-3. **Install IBM Cloud Plugins**
-   ```bash
-   ibmcloud plugin install container-registry
-   ibmcloud plugin install code-engine
-   ```
+**Install IBM Cloud Plugins**
+```bash
+ibmcloud plugin install container-registry
+ibmcloud plugin install code-engine
+```
 
-4. **Create an IBM Cloud account** 
-   <br>Go to https://cloud.ibm.com and sign up if you haven't already.
+**Create an IBM Cloud account** 
+<br>Go to [IBM Cloud](https://cloud.ibm.com) and sign up if you haven't already since we used IBM cloud with docker for this.
 
 ### For Windows:
 The steps are basically the same, just download the Windows version of Docker Desktop and use the Windows installer for IBM Cloud CLI from their website.
 
-## Testing Everything Locally First:
-
-Before you deploy, make sure everything works on your local machine with Docker.
-
-Navigate to the **GameVerse** folder and run:
-```bash
-docker-compose up --build
-```
-
-Then check:
-+ Web: http://localhost
-+ Server: http://localhost:8000
-
-If everything loads, you're good to go. Stop it with:
-```bash
-docker-compose down
-```
-
 ## Deploying to IBM Cloud Code Engine:
-
 ### Login to IBM Cloud
 
 ```bash
@@ -62,20 +43,14 @@ Make sure you select the right region: **ca-tor**.
 ### Target Your Resource Group
 
 ```bash
-# List your resource groups
 ibmcloud resource groups
-
-# Target the default one (usually called "Default")
 ibmcloud target -g Default
 ```
 
 ### Create a Code Engine Project
 
 ```bash
-# Create the project
 ibmcloud ce project create --name gameverse-project
-
-# Select it
 ibmcloud ce project select --name gameverse-project
 ```
 
@@ -106,7 +81,7 @@ ibmcloud ce application create --name gameverse-server \
 
 ```bash
 ibmcloud ce application create --name gameverse-web \
-  --build-source https://github.com/YOUR_GITHUB_USERNAME/GameVerse \
+  --build-source https://github.com/lyndonyz/GameVerse \
   --build-context-dir web \
   --port 80 \
   --min-scale 1 \
@@ -115,8 +90,4 @@ ibmcloud ce application create --name gameverse-web \
   --memory 0.5G
 ```
 
-```bash
-ibmcloud ce application get --name gameverse-web --output url
-```
-
-Now the application should be on IBM Cloud.
+Now the application should be on IBM Cloud. Use the provided URL that should of ben pasted when you created the frontend.
