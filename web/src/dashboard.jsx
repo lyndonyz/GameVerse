@@ -261,7 +261,16 @@ function Dashboard() {
                   </div>
                 </div>
 
-                <div className="comments-column">{commentsContent}</div>
+                <div className="comments-column">
+                  <div className="comments-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <div className="comments-title" style={{ fontWeight: 700 }}>Your comments</div>
+                    <div className="comments-count" style={{ color: "var(--muted)" }}>{comments.length} total</div>
+                  </div>
+
+                  <div className="comments-scroll">
+                    {commentsContent}
+                  </div>
+                </div>
               </div>
             </>
           )}

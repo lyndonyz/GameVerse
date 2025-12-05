@@ -149,6 +149,34 @@
   border-radius: 8px;
 }
 
+.comments-header {
+  gap: 8px;
+}
+
+.comments-title {
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.comments-count {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* show maximum of ~5 comments at once; user can scroll through the rest */
+.comments-scroll {
+  max-height: 520px; /* ~5 items (adjust if your comment-box height changes) */
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* small improvement: visual separator */
+.comments-column .comments-header {
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  margin-bottom: 12px;
+}
+
 /* responsive */
 @media (max-width: 980px) {
   .dashboard-container {
