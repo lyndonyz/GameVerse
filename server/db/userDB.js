@@ -1,5 +1,8 @@
 const { client, USERS_DB } = require("./db");
 const { RetrySystem } = require("./retrySystem");
+const bcrypt = require('bcrypt');
+
+const SALT_ROUNDS = 10;
 
 // ------------------
 // Setup RetrySystem
@@ -58,7 +61,8 @@ async function addUser(_username, _password) {
             return { error: "USERNAME_TAKEN" };
         }
 
-        const newUser = { username: _username, password: _password };
+        const hashedPassword = await bcrypt.hash(_password, SALT_ROUNDS);
+        const newUser = { username: _username, password: hashedPassword };
 
         const res = await retrySystemInstance.execute(() =>
             client.postDocument({
@@ -105,8 +109,8 @@ async function addUserWithEmail(_username, _password, _email) {
             return { error: "EMAIL_TAKEN" };
         }
 
-
-        const newUser = { username: _username, password: _password , email: _email};
+        const hashedPassword = await bcrypt.hash(_password, SALT_ROUNDS);
+        const newUser = { username: _username, password: hashedPassword , email: _email};
 
         const res = await retrySystemInstance.execute(() =>
             client.postDocument({
@@ -205,7 +209,9 @@ async function validateLogin(identifier, password) {
         user = await getUserByUsername(identifier);
     }
     if (!user) return null;
-    return user.password === password ? user : null; 
+    
+    const isMatch = await bcrypt.compare(password, user.password);
+    return isMatch ? user : null;
 }
 
 // ------------------
@@ -386,7 +392,8 @@ async function updatePassword(username, newPassword) {
             return null;
         }
 
-        const updatedDoc = { ...user, password: newPassword };
+        const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+        const updatedDoc = { ...user, password: hashedPassword };
 
          const response = await retrySystemInstance.execute(() =>
             client.putDocument({
