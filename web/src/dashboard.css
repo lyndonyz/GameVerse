@@ -1,13 +1,168 @@
-:root {
-  --bg: #0a001a;
-  --panel: #14002e;
-  --panel-2: #1b0138;
-  --panel-3: #2c014e;
-  --text: #f0e6ff;
-  --muted: #aa8ccf;
-  --brand: #b400f3;
-  --brand-2: #ff00d4;
-  --border: #3a0059;
-  --chip: #240038;
-  --shadow: 0 8px 24px rgba(191, 0, 255, 0.35);
+/* add these rules to create a two-column dashboard layout */
+.dashboard-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: start;
+  margin-top: 12px;
+}
+
+.dashboard-left {
+  background: rgba(255,255,255,0.03);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.dashboard-right {
+  background: rgba(255,255,255,0.03);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.total-games {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.total-number {
+  color: var(--primary);
+}
+
+.status-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.statusFilterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.statusFilterBtn.active {
+  background: rgba(255,255,255,0.06);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+}
+
+.filterDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.filterDot.status-0 { background: #6b7280; }
+.filterDot.status-1 { background: #16a34a; }
+.filterDot.status-2 { background: #2563eb; }
+.filterDot.status-3 { background: #ef4444; }
+
+.pie-wrap {
+  max-width: 420px;
+  margin-top: 8px;
+}
+
+.time-block { margin-bottom: 12px; }
+.date-text { color: var(--muted); margin-bottom: 6px; }
+.time-text { font-weight: 700; color: var(--primary); }
+
+.calendar-wrap { margin-top: 8px; }
+.selected-date { margin-top: 8px; color: var(--muted); font-size: 13px; }
+
+/* ensure pie is left and comments sit to the right with App-like card styling */
+.dashboard-main-row {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  margin-top: 8px;
+  flex-wrap: nowrap;
+}
+
+.pie-column {
+  flex: 0 0 420px;
+}
+
+.comments-column {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* comment card - formatted like App.jsx comment blocks (large horizontal cards) */
+.comment-box {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 18px;
+  border-radius: 10px;
+  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+
+/* title row */
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.comment-game {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+/* body */
+.comment-body {
+  color: #fff;
+  line-height: 1.35;
+  max-height: 120px;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+
+/* small states */
+.comment-loading,
+.no-comments {
+  color: var(--muted);
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed rgba(255,255,255,0.03);
+  border-radius: 8px;
+}
+
+/* responsive */
+@media (max-width: 980px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-main-row {
+    flex-direction: column;
+  }
+  .pie-column {
+    flex: none;
+    width: 100%;
+    max-width: 520px;
+  }
+  .comments-column {
+    width: 100%;
+  }
 }

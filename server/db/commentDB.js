@@ -145,6 +145,38 @@ async function getAvgRatingForGameID(game_id) {
     }
 
 }
+
+// ------------------
+// Get All Comments
+// ------------------
+async function getAllComments(limit = 10000) {
+  try {
+    const response = await retrySystemInstance.execute(() =>
+      client.postFind({
+        db: COMMENTS_DB,
+        selector: {}, // return all docs
+        fields: ["_id", "username", "comment", "gameid", "rating", "createdAt", "gameName"],
+        limit,
+      })
+    );
+
+    const docs = Array.isArray(response.result.docs) ? response.result.docs : [];
+    // normalize shape: return id and friendly fields
+    return docs.map((d) => ({
+      id: d._id,
+      username: d.username,
+      body: d.comment,
+      gameid: d.gameid,
+      gameName: d.gameName || null,
+      rating: d.rating,
+      createdAt: d.createdAt,
+    }));
+  } catch (err) {
+    console.error("getAllComments error:", err);
+    return null;
+  }
+}
+
 module.exports = {
   addComment,
   getCommentById,
@@ -152,5 +184,6 @@ module.exports = {
   deleteComment,
   getAvgRatingForGameID,
   getCommentDateById,
-  getCommentUsernameById
+  getCommentUsernameById,
+  getAllComments, // added export
 };
