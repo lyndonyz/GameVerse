@@ -24,9 +24,16 @@ const registry = require("./db/serviceRegistry");
     await registry.initializeAllServices();
 })();
 
-
-
-app.use(cors());
+// Configure CORS to allow requests from your frontend
+app.use(cors({
+  origin: [
+    'http://localhost',
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'https://gameverse-web.23jpmxbt7759.ca-tor.codeengine.appdomain.cloud'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 app.use("/auth", authRoutes);
 
